@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
     "flag"
     "log"
 )
@@ -8,25 +9,33 @@ import (
 const Name = "pagr"
 const Version = "0.0.0"
 
-var flagDir string
-var flagDirDesc = "directory of target project"
-var flagVerbose bool
-var flagVerboseDesc = "print verbose logs"
-
 func init() {
-    flag.StringVar(&flagDir, "d", ".", flagDirDesc)
-    flag.StringVar(&flagDir, "dir", ".", flagDirDesc)
-    flag.BoolVar(&flagVerbose, "v", false, flagVerboseDesc)
-    flag.BoolVar(&flagVerbose, "verbose", false, flagVerboseDesc)
-    flag.Parse()
 }
 
 func main() {
+    flag.StringVar(&cfg, "cfg", "", "path to pagr project configuration file")
+    flag.BoolVar(&verbose, "verbose", false, "print verbose logs")
+    flag.Parse()
+
+    config, err := loadConfig(cfg)
+    check(err)
+    fmt.Println(config)
+
+    return
 }
 
-func check(error) {
+func check(err error) {
     if err != nil {
-        log.Printf("ERROR! %s\n", err)
+        log.Fatalf("ERROR! %s\n", err)
     }
-    return err != nil
 }
+
+func loadConfig(fpath string) (c Config, e error) {
+    if len(cfg) > 0 {
+        c, e = NewConfigFromFile(cfg)
+    } else {
+        c = NewConfig()
+    }
+    return
+}
+
