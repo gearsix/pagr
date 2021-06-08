@@ -58,7 +58,14 @@ func LoadContentDir(dirpath string) (c Content, e error) {
 
 type Meta map[string]interface{}
 
-func (m *Meta) MergeMeta(meta Meta) {
+func (m *Meta) MergeMeta(meta Meta, overwrite bool) {
+    for k, v := range meta {
+        if _, ok := m[k]; ok && overwrite {
+            m[k] = v
+        } else if !ok {
+            m[k] = v
+        }
+    }
 }
 
 type Page struct {
