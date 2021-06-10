@@ -15,7 +15,7 @@ import (
 	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 )
 
-var SupportedContentFiletypes = []string{
+var ContentBodyExts = [5]string{
     ".txt",  // plain-text
     ".html", // HTML
     ".md",   // commonmark with non-intrusive extensions: linkify, auto heading id, unsafe HTML
@@ -34,12 +34,14 @@ func LoadContentDir(path string) (c Content, e error) {
         }
 
         if info.IsDir() {
-            p := NewPage(strings.TrimPrefix(fpath, path))
+            path := strings.TrimPrefix(fpath, path)
+            p := NewPage(path)
             for _, dir := range strings.Split(fpath, "/") {
                 if _, ok := defaults[dir]; ok {
                     p.Meta.MergeMeta(defaults[dir], true)
                 }
             }
+            pages[path] = p
             return nil
         }
 
@@ -55,7 +57,7 @@ func LoadContentDir(path string) (c Content, e error) {
             } else if strings.Contains(fpath, ".defaults") {
                 defaults[pdir] = m
             }
-        } else if ext := filepath.Ext(fpath); ext == ".txt" || ext == ".md" || ext == ".html" {
+        } else if isContentBodyExt(filepath.Ext(fpath)) > -1 {
             page.NewBodyFromFile(fpath)
         } else {
             page.Assets = append(page.Assets, strings.TrimPrefix(fpath, path))
@@ -70,6 +72,15 @@ func LoadContentDir(path string) (c Content, e error) {
     }
 
     return c, e
+}
+
+func isContentBodyExt(ext string) int {
+    for i, supported := range ContentBodyExts {
+        if ext == supported {
+            return i
+        }
+    }
+    return -1
 }
 
 type Meta map[string]interface{}
@@ -111,18 +122,22 @@ func (p *Page) NewBodyFromFile(fpath string) (err error) {
     }
 
     var body string
-    for _, lang := range SupportedContentFiletypes {
+    for _, lang := range ContentBodyExts {
         if filepath.Ext(fpath) == lang {
             switch (lang) {
             case ".txt":
                 body = txt2html(bytes.NewReader(buf))
             case ".md":
-            case ".gmd":
+                fallthrough
+            case ".gfm":
+                fallthrough
             case ".cm":
                 markdown := getMarkdown(lang)
                 var out bytes.Buffer
                 if err = markdown.Convert(buf, &out); err == nil {
                     body = out.String()
+                } else {
+                    return err
                 }
             case ".html":
                 body = string(buf)
@@ -133,7 +148,7 @@ func (p *Page) NewBodyFromFile(fpath string) (err error) {
     }
 
     if len(body) == 0 {
-        panic("passed invalid filetype to NewBodyFromFile")
+        panic("invalid filetype (" + filepath.Ext(fpath) + ") passed to NewBodyFromFile")
     }
     p.Body = append(p.Body, body)
 
@@ -146,36 +161,39 @@ func (p *Page) NewBodyFromFile(fpath string) (err error) {
 // - If a text line is prefixed with a tab and no tag is open, it will open a <pre> tag
 // - Otherwise any line of text will open a <p> tag
 func txt2html(in io.Reader) (html string) {
-	var block int
+	var tag int
 	const p = 1
-	const pre = 2
+    const pre = 2
 
 	fscan := bufio.NewScanner(in)
 	for fscan.Scan() {
 		line := fscan.Text()
 		if len(strings.TrimSpace(line)) == 0 {
-			switch block {
+			switch tag {
 			case p:
 				html += "</p>\n"
 			case pre:
 				html += "</pre>\n"
 			}
-			block = 0
-		} else if block == 0 && line[0] == '\t' {
-			block = pre
-			html += "<pre>" + line + "\n"
-		} else if block == 0 {
-			block = p
-			html += "<p>" + line
-		} else if block == p {
+			tag = 0
+		} else if tag == 0 && line[0] == '\t' {
+			tag = pre
+            html += "<pre>" + line[1:] + "\n"
+		} else if tag == 0 || (tag == pre && line[0] != '\t') {
+			if tag == pre {
+                html += "</pre>\n"
+            }
+            tag = p
+			html += "<p>" + line 
+		} else if tag == p {
 			html += " " + line
-		} else if block == pre {
-			html += line + "\n"
+		} else if tag == pre {
+            html += line[1:] + "\n"
 		}
 	}
-	if block == p {
+	if tag == p {
 		html += "</p>"
-	} else if block == pre {
+	} else if tag == pre {
 		html += "</pre>"
 	}
 
@@ -204,6 +222,7 @@ func getMarkdown(lang string) (markdown goldmark.Markdown) {
     case ".cm":
         markdown = goldmark.New()
     case ".md":
+        fallthrough
     default:
         markdown = goldmark.New(
             goldmark.WithExtensions(
