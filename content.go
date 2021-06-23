@@ -26,6 +26,9 @@ var ContentContentsExts = [5]string{
 type Content []Page
 
 func LoadContentDir(dir string) (c Content, e error) {
+	_, err := os.Stat(dir)
+	check(err)
+
 	pages := make(map[string]Page)
 	defaults := make(map[string]Meta)
 	if dir[len(dir)-1] != '/' {

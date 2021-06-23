@@ -20,11 +20,15 @@ func main() {
 		config, err = NewConfigFromFile(*cfg)
 		check(err)
 	} else {
+		log.Println("warning: no cfg passed, using defaults")
 		config = NewConfig()
 	}
 
-	_, err = LoadContentDir(config.Contents)
+	var c Content
+	c, err = LoadContentDir(config.Contents)
 	check(err)
+
+	log.Println(c)
 
 	return
 }
