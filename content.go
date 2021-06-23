@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-var ContentBodyExts = [5]string{
+var ContentContentsExts = [5]string{
 	".txt",  // plain-text
 	".html", // HTML
 	".md",   // commonmark with non-intrusive extensions: linkify, auto heading id, unsafe HTML
@@ -39,13 +39,20 @@ func LoadContentDir(dir string) (c Content, e error) {
 		var path string
 		if info.IsDir() {
 			path = "/" + strings.TrimPrefix(fpath, dir)
-			p := NewPage(path)
-			for _, d := range strings.Split(fpath, "/") {
-				if _, ok := defaults[d]; ok {
-					p.Meta.MergeMeta(defaults[d], true)
+			page := NewPage(path)
+			for i, p := range path {
+				if p != '/' {
+					continue
+				}
+				dpath := path[:i]
+				if len(dpath) == 0 {
+					dpath = "/"
+				}
+				if _, ok := defaults[dpath]; ok {
+					page.Meta.MergeMeta(defaults[dpath], true)
 				}
 			}
-			pages[path] = p
+			pages[path] = page
 			return nil
 		}
 
@@ -53,6 +60,7 @@ func LoadContentDir(dir string) (c Content, e error) {
 		path = strings.TrimPrefix(path, dir)
 		path = "/" + strings.TrimSuffix(path, "/")
 		page := pages[path]
+
 		if strings.Contains(fpath, ".page") || strings.Contains(fpath, ".default") {
 			var m Meta
 			if err = suti.LoadDataFile(fpath, &m); err != nil {
@@ -63,8 +71,8 @@ func LoadContentDir(dir string) (c Content, e error) {
 			} else if strings.Contains(fpath, ".defaults") {
 				defaults[path] = m
 			}
-		} else if isContentBodyExt(filepath.Ext(fpath)) > -1 {
-			page.NewBodyFromFile(fpath)
+		} else if isContentContentsExt(filepath.Ext(fpath)) > -1 {
+			page.NewContentsFromFile(fpath)
 		} else {
 			page.Assets = append(page.Assets, strings.TrimPrefix(fpath, path))
 		}
@@ -80,8 +88,8 @@ func LoadContentDir(dir string) (c Content, e error) {
 	return c, e
 }
 
-func isContentBodyExt(ext string) int {
-	for i, supported := range ContentBodyExts {
+func isContentContentsExt(ext string) int {
+	for i, supported := range ContentContentsExts {
 		if ext == supported {
 			return i
 		}
@@ -104,7 +112,7 @@ func (m Meta) MergeMeta(meta Meta, overwrite bool) {
 type Page struct {
 	Path   string
 	Meta   Meta
-	Body   []string
+	Contents   []string
 	Assets []string
 }
 
@@ -112,12 +120,12 @@ func NewPage(path string) Page {
 	return Page{
 		Path:   path,
 		Meta:   make(Meta),
-		Body:   make([]string, 0),
+		Contents:   make([]string, 0),
 		Assets: make([]string, 0),
 	}
 }
 
-func (p *Page) NewBodyFromFile(fpath string) (err error) {
+func (p *Page) NewContentsFromFile(fpath string) (err error) {
 	var buf []byte
 	if f, err := os.Open(fpath); err == nil {
 		buf, err = io.ReadAll(f)
@@ -128,7 +136,7 @@ func (p *Page) NewBodyFromFile(fpath string) (err error) {
 	}
 
 	var body string
-	for _, lang := range ContentBodyExts {
+	for _, lang := range ContentContentsExts {
 		if filepath.Ext(fpath) == lang {
 			switch lang {
 			case ".txt":
@@ -154,9 +162,9 @@ func (p *Page) NewBodyFromFile(fpath string) (err error) {
 	}
 
 	if len(body) == 0 {
-		panic("invalid filetype (" + filepath.Ext(fpath) + ") passed to NewBodyFromFile")
+		panic("invalid filetype (" + filepath.Ext(fpath) + ") passed to NewContentsFromFile")
 	}
-	p.Body = append(p.Body, body)
+	p.Contents = append(p.Contents, body)
 
 	return err
 }

@@ -18,9 +18,9 @@ func TestLoadContentDir(t *testing.T) {
 		t.Fatalf("LoadContentDir failed: %s", err)
 	}
 
-	if len(c) != len(contentBody) {
+	if len(c) != len(contentContents)-1 {
 		t.Fatalf("invalid number of pages returned (%d should be %d)",
-			len(c), len(contentBody))
+			len(c), len(contentContents))
 	}
 	for _, p := range c {
 		if len(p.Path) == 0 {
@@ -29,8 +29,8 @@ func TestLoadContentDir(t *testing.T) {
 		if _, ok := p.Meta["test"]; !ok || len(p.Meta) == 0 {
 			t.Fatalf("empty Meta for page:\n%s\n", p)
 		}
-		if len(p.Body) == 0 {
-			t.Fatalf("empty Body for page:\n%s\n", p)
+		if len(p.Contents) == 0 {
+			t.Fatalf("empty Contents for page:\n%s\n", p)
 		}
 		if len(p.Assets) == 0 {
 			t.Fatalf("empty Assets for page:\n%s\n", p)
@@ -38,7 +38,7 @@ func TestLoadContentDir(t *testing.T) {
 	}
 }
 
-var contentBody = map[string]string{
+var contentContents = map[string]string{
 	".txt": `p1
 p2
 
@@ -103,29 +103,27 @@ func createProjectContents(dir string) (err error) {
 
 	var f *os.File
 	var path string
-	for l, lang := range ContentBodyExts {
-		if l > 0 {
-			path, err = os.MkdirTemp(dir, "page")
-		} else {
+	for l, lang := range ContentContentsExts {
+		if l == 0 {
 			path = dir
-			/*
-				if f, err = os.Create(fmt.Sprintf("%s/.defaults.json", path)); err == nil {
-					return
-				}
-				f.WriteString("{ test: \"data\" }")
-				f.Close()
-				if f, err = os.Create(fmt.Sprintf("%s/.page.toml", path)); err == nil {
-					return
-				}
-				f.WriteString("{ test = \"data\" }")
-				f.Close()
-			*/
+			if f, err = os.Create(fmt.Sprintf("%s/.defaults.json", path)); err != nil {
+				return
+			}
+			f.WriteString("{ \"test\": \"data\" }")
+			f.Close()
+			if f, err = os.Create(fmt.Sprintf("%s/.page.toml", path)); err != nil {
+				return
+			}
+			f.WriteString("test = \"data\"")
+			f.Close()
+		} else if l > 1 {
+				path, err = os.MkdirTemp(path, "page")
 		}
 		f, err = os.Create(fmt.Sprintf("%s/body%d%s", path, l, lang))
 		if err != nil {
 			return
 		}
-		f.WriteString(contentBody[lang])
+		f.WriteString(contentContents[lang])
 		f.Close()
 
 		if f, err = os.Create(fmt.Sprintf("%s/asset.png", path)); err != nil {
