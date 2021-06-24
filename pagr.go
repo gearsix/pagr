@@ -3,10 +3,17 @@ package main
 import (
 	"flag"
 	"log"
+	"notabug.org/gearsix/suti"
 )
 
 const Name = "pagr"
 const Version = "0.0.0"
+
+func check(err error) {
+	if err != nil {
+		log.Fatalf("ERROR! %s\n", err)
+	}
+}
 
 func main() {
 	cfg := flag.String("cfg", "", "path to pagr project configuration file")
@@ -24,17 +31,13 @@ func main() {
 		config = NewConfig()
 	}
 
-	var c Content
-	c, err = LoadContentDir(config.Contents)
+	var _ Content
+	_, err = LoadContentDir(config.Contents)
 	check(err)
 
-	log.Println(c)
+	var _ []suti.Template
+	_, err = LoadTemplateDir(config.Templates)
+	check(err)
 
 	return
-}
-
-func check(err error) {
-	if err != nil {
-		log.Fatalf("ERROR! %s\n", err)
-	}
 }

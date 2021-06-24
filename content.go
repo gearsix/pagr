@@ -26,8 +26,9 @@ var ContentContentsExts = [5]string{
 type Content []Page
 
 func LoadContentDir(dir string) (c Content, e error) {
-	_, err := os.Stat(dir)
-	check(err)
+	if _, e = os.Stat(dir); e != nil {
+		return
+	}
 
 	pages := make(map[string]Page)
 	defaults := make(map[string]Meta)
@@ -36,7 +37,7 @@ func LoadContentDir(dir string) (c Content, e error) {
 	}
 	e = filepath.Walk(dir, func(fpath string, info fs.FileInfo, err error) error {
 		if err != nil {
-			return nil
+			return err
 		}
 
 		var path string
