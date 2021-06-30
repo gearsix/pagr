@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-var ContentContentsExts = [5]string{
+var SupportedContent = [5]string{
 	".txt",  // plain-text
 	".html", // HTML
 	".md",   // commonmark with non-intrusive extensions: linkify, auto heading id, unsafe HTML
@@ -93,7 +93,7 @@ func LoadContentDir(dir string) (c Content, e error) {
 }
 
 func isContentContentsExt(ext string) int {
-	for i, supported := range ContentContentsExts {
+	for i, supported := range SupportedContent {
 		if ext == supported {
 			return i
 		}
@@ -140,7 +140,7 @@ func (p *Page) NewContentsFromFile(fpath string) (err error) {
 	}
 
 	var body string
-	for _, lang := range ContentContentsExts {
+	for _, lang := range SupportedContent {
 		if filepath.Ext(fpath) == lang {
 			switch lang {
 			case ".txt":

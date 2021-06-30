@@ -7,10 +7,12 @@ import (
 )
 
 func TestLoadContentDir(t *testing.T) {
+	t.Parallel()
+
 	var err error
 	tdir := t.TempDir()
 	if err = createProjectContents(tdir); err != nil {
-		t.Errorf("failed to create project: %s", err)
+		t.Errorf("failed to create test content: %s", err)
 	}
 
 	var c Content
@@ -18,10 +20,15 @@ func TestLoadContentDir(t *testing.T) {
 		t.Fatalf("LoadContentDir failed: %s", err)
 	}
 
-	if len(c) != len(contentContents)-1 {
+	validateContents(t, c, err)
+}
+
+func validateContents(t *testing.T, c Content, e error) {
+	if len(c) != len(contents)-1 {
 		t.Fatalf("invalid number of pages returned (%d should be %d)",
-			len(c), len(contentContents))
+			len(c), len(contents))
 	}
+
 	for _, p := range c {
 		if len(p.Path) == 0 {
 			t.Fatalf("empty Path for page:\n%s\n", p)
@@ -38,7 +45,7 @@ func TestLoadContentDir(t *testing.T) {
 	}
 }
 
-var contentContents = map[string]string{
+var contents = map[string]string{
 	".txt": `p1
 p2
 
@@ -79,7 +86,7 @@ p2
 p3`,
 }
 
-var contentAsset = []byte{ // 5x5 black png
+var asset = []byte{ // 5x5 black png
 	0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00,
 	0x0d, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00,
 	0x00, 0x05, 0x01, 0x03, 0x00, 0x00, 0x00, 0xb7, 0xa1, 0xb4, 0xa6,
@@ -95,44 +102,27 @@ var contentAsset = []byte{ // 5x5 black png
 }
 
 func createProjectContents(dir string) (err error) {
-	if _, err := os.Stat(dir); err != nil {
-		if err = os.Mkdir(dir, 0755); err != nil {
-			return err
+	writef := func(path, data string) {
+		if err == nil {
+			err = os.WriteFile(path, []byte(data), 0644)
 		}
 	}
 
-	var f *os.File
-	var path string
-	for l, lang := range ContentContentsExts {
+	var path, data string
+	for l, lang := range SupportedContent {
 		if l == 0 {
-			path = dir
-			if f, err = os.Create(fmt.Sprintf("%s/.defaults.json", path)); err != nil {
-				return
-			}
-			f.WriteString("{ \"test\": \"data\" }")
-			f.Close()
-			if f, err = os.Create(fmt.Sprintf("%s/.page.toml", path)); err != nil {
-				return
-			}
-			f.WriteString("test = \"data\"")
-			f.Close()
+			writef(fmt.Sprintf("%s/.defaults.json", dir), "{ \"test\": \"data\" }")
+			writef(fmt.Sprintf("%s/.page.toml", dir), "test = \"data\"")
 		} else if l > 1 {
-				path, err = os.MkdirTemp(path, "page")
+			dir, err = os.MkdirTemp(dir, "page")
 		}
-		f, err = os.Create(fmt.Sprintf("%s/body%d%s", path, l, lang))
-		if err != nil {
-			return
-		}
-		f.WriteString(contentContents[lang])
-		f.Close()
 
-		if f, err = os.Create(fmt.Sprintf("%s/asset.png", path)); err != nil {
-			return
+		writef(fmt.Sprintf("%s/body%d%s", dir, l, lang), contents[lang])
+		writef(fmt.Sprintf("%s/asset.png", dir), string(asset))
+
+		if err != nil {
+			break
 		}
-		if _, err = f.Write(contentAsset); err != nil {
-			return
-		}
-		f.Close()
 	}
 
 	return
