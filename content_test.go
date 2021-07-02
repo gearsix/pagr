@@ -108,7 +108,6 @@ func createProjectContents(dir string) (err error) {
 		}
 	}
 
-	var path, data string
 	for l, lang := range SupportedContent {
 		if l == 0 {
 			writef(fmt.Sprintf("%s/.defaults.json", dir), "{ \"test\": \"data\" }")
