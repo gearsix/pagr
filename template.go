@@ -34,13 +34,9 @@ func LoadTemplateDir(dir string) ([]suti.Template, error) {
 			paths[t] = make([]string, 0)
 			dir, file := filepath.Split(t)
 			ppath := filepath.Join(dir, strings.TrimSuffix(file, filepath.Ext(file)))
-			if _, err := os.Stat(ppath); err == nil {
-				var partials []string
-				// TODO: calling loadPaths again is inefficient 
-				if partials, err = loadPaths(ppath); err != nil {
-					return nil, err
-				} else {
-					paths[t] = partials
+			for _, p := range tpaths {
+				if strings.Contains(p, ppath) && p != t {
+					paths[t] = append(paths[t], p)
 				}
 			}
 		}
