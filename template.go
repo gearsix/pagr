@@ -8,8 +8,12 @@ import (
 	"notabug.org/gearsix/suti"
 )
 
+// DefaultTemplate provides the default name for the template used
+// when one isn't specified in a `Page.Meta`.
 const DefaultTemplate = "root"
 
+// loadPaths calls `filepath.Walk` on dir and loads all
+// non-directory filepaths in `dir`
 func loadPaths(dir string) ([]string, error) {
 	var r []string
 	err := filepath.Walk(dir,
@@ -25,6 +29,10 @@ func loadPaths(dir string) ([]string, error) {
 	return r, err
 }
 
+// LoadTemplateDir loads all files in `dir` that are not directories as a `suti.Template`
+// by calling `suti.LoadTemplateFile`. Partials for each template will be parsed from all
+// files in a directory matching the base filename of the template (not including
+// extension) if it exists.
 func LoadTemplateDir(dir string) ([]suti.Template, error) {
 	paths := make(map[string][]string) // [template][]partials
 

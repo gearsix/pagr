@@ -6,12 +6,15 @@ import (
 	"path/filepath"
 )
 
+// Config is the data structure containing all key/values to be loaded
+// in pagr configuration files
 type Config struct {
 	Contents  string
 	Templates string
 	Output    string
 }
 
+// relPaths sets all filepath values in `cfg` relative to `dir`
 func (cfg *Config) relPaths(dir string) {
 	var paths = []string{cfg.Contents, cfg.Templates, cfg.Output}
 	for i, path := range paths {

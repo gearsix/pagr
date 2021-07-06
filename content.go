@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"github.com/yuin/goldmark"
 	goldmarkext "github.com/yuin/goldmark/extension"
 	goldmarkparse "github.com/yuin/goldmark/parser"
@@ -15,10 +16,13 @@ import (
 	"strings"
 )
 
+// SupportedContent provides a list of supported file extensions for Content files.
+// Any file in the Content directory not matching one of these will be ignored unless
+// it's a Meta file.
 var SupportedContent = [5]string{
 	".txt",  // plain-text
 	".html", // HTML
-	".md",   // commonmark with non-intrusive extensions: linkify, auto heading id, unsafe HTML
+	".md",   // commonmark + extensions (linkify, auto-heading id, unsafe HTML)
 	".gfm",  // github-flavoured markdown
 	".cm",   // commonmark
 }
@@ -79,7 +83,7 @@ func LoadContentDir(dir string) (c Content, e error) {
 			} else if strings.Contains(fpath, ".defaults") {
 				defaults[path] = m
 			}
-		} else if isContentContentsExt(filepath.Ext(fpath)) > -1 {
+		} else if isSupportedContentExt(filepath.Ext(fpath)) > -1 {
 			page.NewContentsFromFile(fpath)
 		} else {
 			page.Assets = append(page.Assets, strings.TrimPrefix(fpath, path))
@@ -96,7 +100,7 @@ func LoadContentDir(dir string) (c Content, e error) {
 	return c, e
 }
 
-func isContentContentsExt(ext string) int {
+func isSupportedContentExt(ext string) int {
 	for i, supported := range SupportedContent {
 		if ext == supported {
 			return i
@@ -105,8 +109,11 @@ func isContentContentsExt(ext string) int {
 	return -1
 }
 
+// Meta is the structure any metadata is parsed into (_.toml_, _.json_, etc)
 type Meta map[string]interface{}
 
+// MergeMeta merges `meta` into `m`. When there are matching keys in both,
+// `overwrite` determines whether the existing value in `m` is overwritten.
 func (m Meta) MergeMeta(meta Meta, overwrite bool) {
 	for k, v := range meta {
 		if _, ok := m[k]; ok && overwrite {
@@ -117,6 +124,9 @@ func (m Meta) MergeMeta(meta Meta, overwrite bool) {
 	}
 }
 
+// Page is the data structure loaded from Content files/folders that
+// gets passed to templates for execution after Content has been loaded.
+// This is the data structure to reference when writing a template!
 type Page struct {
 	Path     string
 	Meta     Meta
@@ -124,6 +134,8 @@ type Page struct {
 	Assets   []string
 }
 
+// NewPage returns a Page with init values.
+// `.Path` will be set to `path`.
 func NewPage(path string) Page {
 	return Page{
 		Path:     path,
@@ -147,6 +159,12 @@ func (p *Page) GetTemplate() string {
 	}
 }
 
+// NewContentsFromFile loads the file from `fpath` and converts it to HTML
+// from the language matching it's file extension (see below).
+// - ".txt" = plain-text
+// - ".md", ".gfm", ".cm" = various flavours of markdown
+// - ".html" = parsed as-is
+// Successful conversions are appended to `p.Contents`
 func (p *Page) NewContentsFromFile(fpath string) (err error) {
 	var buf []byte
 	if f, err := os.Open(fpath); err == nil {
@@ -162,41 +180,37 @@ func (p *Page) NewContentsFromFile(fpath string) (err error) {
 		if filepath.Ext(fpath) == lang {
 			switch lang {
 			case ".txt":
-				body = txt2html(bytes.NewReader(buf))
+				body = convertTextToHTML(bytes.NewReader(buf))
 			case ".md":
 				fallthrough
 			case ".gfm":
 				fallthrough
 			case ".cm":
-				markdown := getMarkdown(lang)
-				var out bytes.Buffer
-				if err = markdown.Convert(buf, &out); err == nil {
-					body = out.String()
-				} else {
-					return err
-				}
+				body, err = convertMarkdownToHTML(lang, buf)
 			case ".html":
 				body = string(buf)
 			default:
-				continue
+				break
 			}
 		}
 	}
-
 	if len(body) == 0 {
-		panic("invalid filetype (" + filepath.Ext(fpath) + ") passed to NewContentsFromFile")
+		err = fmt.Errorf("invalid filetype (%s) passed to NewContentsFromFile",
+			filepath.Ext(fpath))
 	}
-	p.Contents = append(p.Contents, body)
+	if err == nil {
+		p.Contents = append(p.Contents, body)
+	}
 
 	return err
 }
 
-// txt2html parses textual data from `in` and line-by-line converts
+// convertTextToHTML parses textual data from `in` and line-by-line converts
 // it to HTML. Conversion rules are as follows:
 // - Blank lines (with escape characters trimmed) will close any opon tags
 // - If a text line is prefixed with a tab and no tag is open, it will open a <pre> tag
 // - Otherwise any line of text will open a <p> tag
-func txt2html(in io.Reader) (html string) {
+func convertTextToHTML(in io.Reader) (html string) {
 	var tag int
 	const p = 1
 	const pre = 2
@@ -236,7 +250,14 @@ func txt2html(in io.Reader) (html string) {
 	return html
 }
 
-func getMarkdown(lang string) (markdown goldmark.Markdown) {
+// convertMarkdownToHTML initialises a `goldmark.Markdown` based on `lang` and
+// returns values from calling it's `Convert` function on `in`.
+// Markdown `lang` options, see the code for specfics:
+// - ".gfm" = github-flavoured markdown
+// - ".cm" = standard commonmark
+// - ".md" (and anything else) = commonmark + extensions (linkify, auto-heading id, unsafe HTML)
+func convertMarkdownToHTML(lang string, buf []byte) (string, error) {
+	var markdown goldmark.Markdown
 	switch lang {
 	case ".gfm":
 		markdown = goldmark.New(
@@ -272,5 +293,8 @@ func getMarkdown(lang string) (markdown goldmark.Markdown) {
 			),
 		)
 	}
-	return
+
+	var out bytes.Buffer
+	err := markdown.Convert(buf, &out)
+	return out.String(), err
 }
