@@ -40,6 +40,10 @@ func LoadContentDir(dir string) (c Content, e error) {
 			return err
 		}
 
+		if strings.Contains(fpath, ".ignore") {
+			return nil
+		}
+
 		var path string
 		if info.IsDir() {
 			path = "/" + strings.TrimPrefix(fpath, dir)
