@@ -114,18 +114,32 @@ func (m Meta) MergeMeta(meta Meta, overwrite bool) {
 }
 
 type Page struct {
-	Path   string
-	Meta   Meta
-	Contents   []string
-	Assets []string
+	Path     string
+	Meta     Meta
+	Contents []string
+	Assets   []string
 }
 
 func NewPage(path string) Page {
 	return Page{
-		Path:   path,
-		Meta:   make(Meta),
-		Contents:   make([]string, 0),
-		Assets: make([]string, 0),
+		Path:     path,
+		Meta:     make(Meta),
+		Contents: make([]string, 0),
+		Assets:   make([]string, 0),
+	}
+}
+
+// GetTemplate will check if `p.Meta` has the key `template` or `Template`
+// (in the order) and return the value of the first existing key as a string.
+// If `.Meta` neither has the key `template` or `Template`, then it will
+// return `DefaultTemplate` from [./template.go].
+func (p *Page) GetTemplate() string {
+	if v, ok := p.Meta["template"]; ok {
+		return v.(string)
+	} else if v, ok = p.Meta["Template"]; ok {
+		return v.(string)
+	} else {
+		return DefaultTemplate
 	}
 }
 

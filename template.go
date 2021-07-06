@@ -8,6 +8,8 @@ import (
 	"notabug.org/gearsix/suti"
 )
 
+const DefaultTemplate = "root"
+
 func loadPaths(dir string) ([]string, error) {
 	var r []string
 	err := filepath.Walk(dir,
