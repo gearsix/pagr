@@ -52,15 +52,14 @@ func LoadTemplateDir(dir string) ([]suti.Template, error) {
 		}
 	}
 
-	var err error
 	var ret []suti.Template
 	for t, partials := range paths {
 		tmpl, err := suti.LoadTemplateFile(t, partials...)
 		if err != nil {
-			break
+			return nil, err
 		}
 		ret = append(ret, tmpl)
 	}
 
-	return ret, err
+	return ret, nil
 }
