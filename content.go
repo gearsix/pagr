@@ -10,15 +10,16 @@ import (
 	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 	"io"
 	"io/fs"
+	"time"
 	"notabug.org/gearsix/suti"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// SupportedContent provides a list of supported file extensions for Content files.
-// Any file in the Content directory not matching one of these will be ignored unless
-// it's a Meta file.
+// SupportedContent provides a list of supported file extensions for Content
+// files. Any file in the Content directory not matching one of these will be
+// ignored unless it's a Meta file.
 var SupportedContent = [5]string{
 	".txt",  // plain-text
 	".html", // HTML
@@ -27,8 +28,43 @@ var SupportedContent = [5]string{
 	".cm",   // commonmark
 }
 
+func titleFromPath(path string) (title string) {
+	if title = filepath.Base(path); title == "." {
+		title = "Home"
+	}
+	title = strings.ReplaceAll(title, "-", " ")
+	title = strings.Title(title)
+	return
+}
+
+func lastFileMod(fpath string) time.Time {
+	t := time.Now() // default/error ret
+	if fd, e := os.Stat(fpath); e != nil {
+		return t
+	} else if !fd.IsDir() {
+		return fd.ModTime()
+	} else {
+		t = fd.ModTime()
+	}
+	if dir, err := os.ReadDir(fpath); err != nil {
+		return t
+	} else {
+		for _, d := range dir {
+			if fd, err := d.Info(); err == nil && fd.ModTime().After(t) {
+				t = fd.ModTime()
+			}
+		}
+	}
+	return t
+}
+
 type Content []Page
 
+// LoadContentDir parses all files/directories in `dir` into a `Content`.
+// For each directory, a new `Page` element will be generated, any file with a
+// filetype found in `SupportedContent`, will be parsed into a string of HTML
+// and appended to the `.Content` of the `Page` generated for it's parent
+// directory.
 func LoadContentDir(dir string) (c Content, e error) {
 	if _, e = os.Stat(dir); e != nil {
 		return
@@ -84,9 +120,9 @@ func LoadContentDir(dir string) (c Content, e error) {
 				defaults[path] = m
 			}
 		} else if isSupportedContentExt(filepath.Ext(fpath)) > -1 {
-			page.NewContentsFromFile(fpath)
+			err = page.NewContentFromFile(fpath)
 		} else {
-			page.Assets = append(page.Assets, strings.TrimPrefix(fpath, path))
+			page.Assets = append(page.Assets, fpath)
 		}
 
 		pages[path] = page
@@ -128,20 +164,25 @@ func (m Meta) MergeMeta(meta Meta, overwrite bool) {
 // gets passed to templates for execution after Content has been loaded.
 // This is the data structure to reference when writing a template!
 type Page struct {
+	Title    string
 	Path     string
 	Meta     Meta
 	Contents []string
 	Assets   []string
+	Updated  time.Time
 }
 
-// NewPage returns a Page with init values.
-// `.Path` will be set to `path`.
+// NewPage returns a Page with init values. `.Title` will be set to the
+// value returned by titleFromPath(path), `.Path` will be set to `path`.
+// Updated is set to time.Now(). Any other values will simply be initialised.
 func NewPage(path string) Page {
 	return Page{
+		Title:    titleFromPath(path),
 		Path:     path,
 		Meta:     make(Meta),
 		Contents: make([]string, 0),
 		Assets:   make([]string, 0),
+		Updated:  lastFileMod(path),
 	}
 }
 
@@ -159,13 +200,13 @@ func (p *Page) GetTemplate() string {
 	}
 }
 
-// NewContentsFromFile loads the file from `fpath` and converts it to HTML
+// NewContentFromFile loads the file from `fpath` and converts it to HTML
 // from the language matching it's file extension (see below).
 // - ".txt" = plain-text
 // - ".md", ".gfm", ".cm" = various flavours of markdown
 // - ".html" = parsed as-is
 // Successful conversions are appended to `p.Contents`
-func (p *Page) NewContentsFromFile(fpath string) (err error) {
+func (p *Page) NewContentFromFile(fpath string) (err error) {
 	var buf []byte
 	if f, err := os.Open(fpath); err == nil {
 		buf, err = io.ReadAll(f)
@@ -195,7 +236,7 @@ func (p *Page) NewContentsFromFile(fpath string) (err error) {
 		}
 	}
 	if len(body) == 0 {
-		err = fmt.Errorf("invalid filetype (%s) passed to NewContentsFromFile",
+		err = fmt.Errorf("invalid filetype (%s) passed to NewContentFromFile",
 			filepath.Ext(fpath))
 	}
 	if err == nil {
