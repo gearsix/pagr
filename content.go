@@ -130,7 +130,20 @@ func LoadContentDir(dir string) (c Content, e error) {
 	})
 
 	for _, page := range pages {
-		c = append(c, page)
+		l := len(c)
+		for i, _ := range c {
+			if page.Updated.After(c[i].Updated) {
+				if i == 0 {
+					c = append([]Page{page}, c...)
+				} else {
+					c = append(c[:i-1], append([]Page{page}, c[i:]...)...)
+				}
+				break
+			}
+		}
+		if len(c) == l {
+			c = append(c, page)
+		}
 	}
 
 	return c, e

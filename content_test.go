@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 	"testing"
 )
 
@@ -29,7 +30,11 @@ func validateContents(t *testing.T, c Content, e error) {
 			len(c), len(contents))
 	}
 
-	for _, p := range c {
+	var last time.Time
+	for i, p := range c {
+		if len(p.Title) == 0 {
+			t.Fatal("empty Title for page:\n", p)
+		}
 		if len(p.Path) == 0 {
 			t.Fatalf("empty Path for page:\n%s\n", p)
 		}
@@ -41,6 +46,15 @@ func validateContents(t *testing.T, c Content, e error) {
 		}
 		if len(p.Assets) == 0 {
 			t.Fatalf("empty Assets for page:\n%s\n", p)
+		}
+
+		if i == 0 {
+			last = p.Updated
+		} else if p.Updated.After(last) {
+			for _, pp := range c {
+				t.Log(pp.Updated)
+			}
+			t.Fatalf("Contents Pages returned in wrong order")
 		}
 	}
 }

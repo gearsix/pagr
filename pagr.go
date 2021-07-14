@@ -35,11 +35,11 @@ func check(err error) {
 func init() {
 	flag.StringVar(&cfg, "cfg", "", "path to pagr project configuration file")
 	flag.BoolVar(&verbose, "v", false, "print verbose logs")
-	flag.Parse()
-	vlog("verbose on")
 }
 
 func main() {
+	flag.Parse()
+	vlog("verbose on")
 	var err error
 
 	var config Config
