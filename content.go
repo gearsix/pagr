@@ -60,6 +60,32 @@ func lastFileMod(fpath string) time.Time {
 
 type Content []Page
 
+// Sitemap generates the PageNav for each child Page elements' .Nav entry if not
+// already defined. A pointer to the "Root" Page is returned (*Page).
+// The .Path value of each child element is used to determine each value.
+func (c *Content) Sitemap() *Page {
+	var root *Page
+	for _, pg := range c {
+		if pg.Path == "/" {
+			root = &pg
+			break
+		}
+	}
+
+	for _, pg := range c {
+		if root != nil {
+			pg.Nav.Root = root
+		}
+		for i, p := range strings.Split(pg.Path, "/")[1:] {
+			if len(p) == 0 {
+				continue
+			}
+		}
+	}
+
+	return root
+}
+
 // LoadContentDir parses all files/directories in `dir` into a `Content`.
 // For each directory, a new `Page` element will be generated, any file with a
 // filetype found in `SupportedContent`, will be parsed into a string of HTML
@@ -145,6 +171,7 @@ func LoadContentDir(dir string) (c Content, e error) {
 			c = append(c, page)
 		}
 	}
+	c.Sitemap()
 
 	return c, e
 }
@@ -179,10 +206,20 @@ func (m Meta) MergeMeta(meta Meta, overwrite bool) {
 type Page struct {
 	Title    string
 	Path     string
+	Nav      PageNav
 	Meta     Meta
 	Contents []string
 	Assets   []string
 	Updated  time.Time
+}
+
+// PageNav is a struct that provides a set of pointers for navigating a
+// across a set of pages.
+type PageNav struct {
+	Root     *Page
+	Parent   *Page
+	Children []*Page
+	Crumbs   []*Page
 }
 
 // NewPage returns a Page with init values. `.Title` will be set to the
@@ -192,6 +229,7 @@ func NewPage(path string) Page {
 	return Page{
 		Title:    titleFromPath(path),
 		Path:     path,
+		Nav:      make(PageNav),
 		Meta:     make(Meta),
 		Contents: make([]string, 0),
 		Assets:   make([]string, 0),
