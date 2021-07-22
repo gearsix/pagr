@@ -33,28 +33,28 @@ func validateContents(t *testing.T, c Content, e error) {
 	var last time.Time
 	for i, p := range c {
 		if len(p.Title) == 0 {
-			t.Fatal("empty Title for page:\n", p)
+			t.Fatal("empty Title for page:", p)
 		}
 		if len(p.Path) == 0 {
-			t.Fatalf("empty Path for page:\n%s\n", p)
+			t.Fatal("empty Path for page:", p)
 		}
 		if _, ok := p.Meta["test"]; !ok || len(p.Meta) == 0 {
-			t.Fatalf("empty Meta for page:\n%s\n", p)
+			t.Fatal("empty Meta for page:", p)
 		}
 		if len(p.Contents) == 0 {
-			t.Fatalf("empty Contents for page:\n%s\n", p)
+			t.Fatal("empty Contents for page:", p)
 		}
 		if len(p.Assets) == 0 {
-			t.Fatalf("empty Assets for page:\n%s\n", p)
+			t.Fatal("empty Assets for page:", p)
 		}
 
 		if i == 0 {
 			last = p.Updated
-		} else if p.Updated.After(last) {
+		} else if p.Updated.Before(last) {
 			for _, pp := range c {
 				t.Log(pp.Updated)
 			}
-			t.Fatalf("Contents Pages returned in wrong order")
+			t.Fatal("Contents Pages returned in wrong order")
 		}
 	}
 }
