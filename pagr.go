@@ -44,14 +44,14 @@ func main() {
 
 	var config Config
 	if len(cfg) > 0 {
+		vlog("loading '%s'", cfg)
 		config, err = NewConfigFromFile(cfg)
 		check(err)
-		vlog("config: %s\n", config)
 	} else {
 		log.Println("warning: no cfg passed, using defaults")
 		config = NewConfig()
 	}
-	log.Printf("loaded config '%s'", cfg)
+	vlog("loaded config: %s\n", config)
 
 	var c Content
 	c, err = LoadContentDir(config.Contents)
