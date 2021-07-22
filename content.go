@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sort"
 )
 
 // SupportedContent provides a list of supported file extensions for Content
@@ -29,9 +30,10 @@ var SupportedContent = [5]string{
 }
 
 func titleFromPath(path string) (title string) {
-	if title = filepath.Base(path); title == "." {
+	if title = filepath.Base(path); title == "/" {
 		title = "Home"
 	}
+	title = strings.TrimSuffix(title, filepath.Ext(title))
 	title = strings.ReplaceAll(title, "-", " ")
 	title = strings.Title(title)
 	return
@@ -60,30 +62,59 @@ func lastFileMod(fpath string) time.Time {
 
 type Content []Page
 
-// Sitemap generates the PageNav for each child Page elements' .Nav entry if not
-// already defined. A pointer to the "Root" Page is returned (*Page).
-// The .Path value of each child element is used to determine each value.
-func (c *Content) Sitemap() *Page {
+// Sitemap parses `pages` to determine the `.PageNav` values for each element in `pages`
+// based on their `.Path` value. These values will be set in the returned Content
+func BuildSitemap(pages Content) Content {
 	var root *Page
-	for _, pg := range c {
-		if pg.Path == "/" {
-			root = &pg
+	for i, p := range pages {
+		if p.Path == "/" {
+			root = &pages[i]
 			break
 		}
 	}
 
-	for _, pg := range c {
-		if root != nil {
-			pg.Nav.Root = root
+	for i, p := range pages {
+		p.Nav.Root = root
+
+		pdepth := len(strings.Split(p.Path, "/")[1:])
+		if p.Path == "/" {
+			pdepth = 0
 		}
-		for i, p := range strings.Split(pg.Path, "/")[1:] {
-			if len(p) == 0 {
-				continue
+
+		if pdepth == 1 && p.Path != "/" {
+			p.Nav.Parent = root
+		}
+
+		for j, pp := range pages {
+			ppdepth := len(strings.Split(pp.Path, "/")[1:])
+			if pp.Path == "/" {
+				ppdepth = 0
+			}
+
+			p.Nav.All = append(p.Nav.All, &pages[j])
+			if p.Nav.Parent == nil && ppdepth == pdepth - 1 && strings.Contains(p.Path, pp.Path) {
+				p.Nav.Parent = &pages[j]
+			}
+			if ppdepth == pdepth + 1 && strings.Contains(pp.Path, p.Path) {
+				p.Nav.Children = append(p.Nav.Children, &pages[j])
 			}
 		}
+
+		var crumb string
+		for _, c := range strings.Split(p.Path, "/")[1:] {
+			crumb += "/" + c
+			for j, pp := range pages {
+				if pp.Path == crumb {
+					p.Nav.Crumbs = append(p.Nav.Crumbs, &pages[j])
+					break
+				}
+			}
+		}
+
+		pages[i] = p
 	}
 
-	return root
+	return pages
 }
 
 // LoadContentDir parses all files/directories in `dir` into a `Content`.
@@ -156,22 +187,11 @@ func LoadContentDir(dir string) (c Content, e error) {
 	})
 
 	for _, page := range pages {
-		l := len(c)
-		for i, _ := range c {
-			if page.Updated.After(c[i].Updated) {
-				if i == 0 {
-					c = append([]Page{page}, c...)
-				} else {
-					c = append(c[:i-1], append([]Page{page}, c[i:]...)...)
-				}
-				break
-			}
-		}
-		if len(c) == l {
-			c = append(c, page)
-		}
+		c = append(c, page)
 	}
-	c.Sitemap()
+	sort.SliceStable(c, func(i, j int) bool { return c[i].Updated.Before(c[j].Updated) })
+
+	c = BuildSitemap(c)
 
 	return c, e
 }
@@ -214,8 +234,10 @@ type Page struct {
 }
 
 // PageNav is a struct that provides a set of pointers for navigating a
-// across a set of pages.
+// across a set of pages. All values are initialised to nil and will only
+// be populated manually or by calling `BuildSitemap`.
 type PageNav struct {
+	All      []*Page
 	Root     *Page
 	Parent   *Page
 	Children []*Page
@@ -229,7 +251,7 @@ func NewPage(path string) Page {
 	return Page{
 		Title:    titleFromPath(path),
 		Path:     path,
-		Nav:      make(PageNav),
+		Nav:      PageNav{},
 		Meta:     make(Meta),
 		Contents: make([]string, 0),
 		Assets:   make([]string, 0),
