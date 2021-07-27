@@ -1,5 +1,5 @@
 OUT=./pagr
-SRC=pagr.go config.go content.go template.go
+SRC=pagr.go config.go page.go template.go
 
 all:
 	go clean

@@ -38,14 +38,17 @@ func validateContents(t *testing.T, pages []Page, e error) {
 		if len(p.Path) == 0 {
 			t.Fatal("empty Path for page:", p)
 		}
-		if _, ok := p.Meta["test"]; !ok || len(p.Meta) == 0 {
-			t.Fatal("empty Meta for page:", p)
+		if _, ok := p.Meta["page"]; !ok || len(p.Meta) == 0 {
+			t.Fatal("missing page Meta key for page:", p.Path)
+		}
+		if _, ok := p.Meta["default"]; !ok || len(p.Meta) == 0 {
+			t.Fatal("empty default Meta key for page:", p.Path)
 		}
 		if len(p.Contents) == 0 {
-			t.Fatal("empty Contents for page:", p)
+			t.Fatal("empty Contents for page:", p.Path)
 		}
 		if len(p.Assets) == 0 {
-			t.Fatal("empty Assets for page:", p)
+			t.Fatal("empty Assets for page:", p.Path)
 		}
 
 		if i == 0 {
@@ -122,14 +125,13 @@ func createProjectContents(dir string) (err error) {
 		}
 	}
 
-	for l, lang := range SupportedContent {
+	for l, lang := range contentExts {
 		if l == 0 {
-			writef(fmt.Sprintf("%s/.defaults.json", dir), "{ \"test\": \"data\" }")
-			writef(fmt.Sprintf("%s/.page.toml", dir), "test = \"data\"")
+			writef(fmt.Sprintf("%s/defaults.json", dir), "{ \"default\": \"data\" }")
 		} else if l > 1 {
 			dir, err = os.MkdirTemp(dir, "page")
 		}
-
+		writef(fmt.Sprintf("%s/.page.toml", dir), "page = \"data\"")
 		writef(fmt.Sprintf("%s/body%d%s", dir, l, lang), contents[lang])
 		writef(fmt.Sprintf("%s/asset.png", dir), string(asset))
 

@@ -18,17 +18,6 @@ import (
 	"sort"
 )
 
-// SupportedContent provides a list of supported file extensions for Content
-// files. Any file in the Content directory not matching one of these will be
-// ignored unless it's a Meta file.
-var SupportedContent = [5]string{
-	".txt",  // plain-text
-	".html", // HTML
-	".md",   // commonmark + extensions (linkify, auto-heading id, unsafe HTML)
-	".gfm",  // github-flavoured markdown
-	".cm",   // commonmark
-}
-
 func titleFromPath(path string) (title string) {
 	if title = filepath.Base(path); title == "/" {
 		title = "Home"
@@ -115,9 +104,26 @@ func BuildSitemap(pages []Page) []Page {
 	return pages
 }
 
+var contentExts = [5]string{
+	".txt",  // plain-text
+	".html", // HTML
+	".md",   // commonmark + extensions (linkify, auto-heading id, unsafe HTML)
+	".gfm",  // github-flavoured markdown
+	".cm",   // commonmark
+}
+
+func isContentExt(ext string) int {
+	for i, supported := range contentExts {
+		if ext == supported {
+			return i
+		}
+	}
+	return -1
+}
+
 // LoadContentDir parses all files/directories in `dir` into a `Content`.
 // For each directory, a new `Page` element will be generated, any file with a
-// filetype found in `SupportedContent`, will be parsed into a string of HTML
+// filetype found in `contentExts`, will be parsed into a string of HTML
 // and appended to the `.Content` of the `Page` generated for it's parent
 // directory.
 func LoadContentDir(dir string) (p []Page, e error) {
@@ -164,17 +170,18 @@ func LoadContentDir(dir string) (p []Page, e error) {
 		path = "/" + strings.TrimSuffix(path, "/")
 		page := pages[path]
 
-		if strings.Contains(fpath, ".page") || strings.Contains(fpath, ".default") {
+		if strings.Contains(fpath, "page.") || strings.Contains(fpath, "defaults.") {
 			var m Meta
 			if err = suti.LoadDataFile(fpath, &m); err != nil {
 				return err
 			}
-			if strings.Contains(fpath, ".page") {
+			if strings.Contains(fpath, "page.") {
 				page.Meta.MergeMeta(m, true)
-			} else if strings.Contains(fpath, ".defaults") {
+			} else if strings.Contains(fpath, "defaults.") {
+				page.Meta.MergeMeta(m, false)
 				defaults[path] = m
 			}
-		} else if isSupportedContentExt(filepath.Ext(fpath)) > -1 {
+		} else if isContentExt(filepath.Ext(fpath)) > -1 {
 			err = page.NewContentFromFile(fpath)
 		} else {
 			page.Assets = append(page.Assets, fpath)
@@ -192,15 +199,6 @@ func LoadContentDir(dir string) (p []Page, e error) {
 	p = BuildSitemap(p)
 
 	return
-}
-
-func isSupportedContentExt(ext string) int {
-	for i, supported := range SupportedContent {
-		if ext == supported {
-			return i
-		}
-	}
-	return -1
 }
 
 // Meta is the structure any metadata is parsed into (_.toml_, _.json_, etc)
@@ -288,7 +286,7 @@ func (p *Page) NewContentFromFile(fpath string) (err error) {
 	}
 
 	var body string
-	for _, lang := range SupportedContent {
+	for _, lang := range contentExts {
 		if filepath.Ext(fpath) == lang {
 			switch lang {
 			case ".txt":
