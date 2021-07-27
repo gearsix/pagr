@@ -9,20 +9,20 @@ import (
 // Config is the data structure containing all key/values to be loaded
 // in pagr configuration files
 type Config struct {
-	Contents  string
+	Pages  string
 	Templates string
 	Output    string
 }
 
 // relPaths sets all filepath values in `cfg` relative to `dir`
 func (cfg *Config) relPaths(dir string) {
-	var paths = []string{cfg.Contents, cfg.Templates, cfg.Output}
+	var paths = []string{cfg.Pages, cfg.Templates, cfg.Output}
 	for i, path := range paths {
 		if !filepath.IsAbs(path) {
 			paths[i] = filepath.Join(dir, path)
 		}
 	}
-	cfg.Contents = paths[0]
+	cfg.Pages = paths[0]
 	cfg.Templates = paths[1]
 	cfg.Output = paths[2]
 	return
@@ -31,7 +31,7 @@ func (cfg *Config) relPaths(dir string) {
 // NewConfig returns a Config with default values
 func NewConfig() Config {
 	return Config{
-		Contents:  "./content",
+		Pages:  "./content",
 		Templates: "./templates",
 		Output:    "./out",
 	}

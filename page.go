@@ -18,37 +18,6 @@ import (
 	"sort"
 )
 
-func titleFromPath(path string) (title string) {
-	if title = filepath.Base(path); title == "/" {
-		title = "Home"
-	}
-	title = strings.TrimSuffix(title, filepath.Ext(title))
-	title = strings.ReplaceAll(title, "-", " ")
-	title = strings.Title(title)
-	return
-}
-
-func lastFileMod(fpath string) time.Time {
-	t := time.Now() // default/error ret
-	if fd, e := os.Stat(fpath); e != nil {
-		return t
-	} else if !fd.IsDir() {
-		return fd.ModTime()
-	} else {
-		t = fd.ModTime()
-	}
-	if dir, err := os.ReadDir(fpath); err != nil {
-		return t
-	} else {
-		for _, d := range dir {
-			if fd, err := d.Info(); err == nil && fd.ModTime().After(t) {
-				t = fd.ModTime()
-			}
-		}
-	}
-	return t
-}
-
 // Sitemap parses `pages` to determine the `.Nav` values for each element in `pages`
 // based on their `.Path` value. These values will be set in the returned Content
 func BuildSitemap(pages []Page) []Page {
@@ -102,6 +71,37 @@ func BuildSitemap(pages []Page) []Page {
 	}
 
 	return pages
+}
+
+func titleFromPath(path string) (title string) {
+	if title = filepath.Base(path); title == "/" {
+		title = "Home"
+	}
+	title = strings.TrimSuffix(title, filepath.Ext(title))
+	title = strings.ReplaceAll(title, "-", " ")
+	title = strings.Title(title)
+	return
+}
+
+func lastFileMod(fpath string) time.Time {
+	t := time.Now() // default/error ret
+	if fd, e := os.Stat(fpath); e != nil {
+		return t
+	} else if !fd.IsDir() {
+		return fd.ModTime()
+	} else {
+		t = fd.ModTime()
+	}
+	if dir, err := os.ReadDir(fpath); err != nil {
+		return t
+	} else {
+		for _, d := range dir {
+			if fd, err := d.Info(); err == nil && fd.ModTime().After(t) {
+				t = fd.ModTime()
+			}
+		}
+	}
+	return t
 }
 
 var contentExts = [5]string{
