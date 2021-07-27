@@ -60,7 +60,7 @@ func lastFileMod(fpath string) time.Time {
 	return t
 }
 
-// Sitemap parses `pages` to determine the `.PageNav` values for each element in `pages`
+// Sitemap parses `pages` to determine the `.Nav` values for each element in `pages`
 // based on their `.Path` value. These values will be set in the returned Content
 func BuildSitemap(pages []Page) []Page {
 	var root *Page
@@ -224,17 +224,17 @@ func (m Meta) MergeMeta(meta Meta, overwrite bool) {
 type Page struct {
 	Title    string
 	Path     string
-	Nav      PageNav
+	Nav      Nav
 	Meta     Meta
 	Contents []string
 	Assets   []string
 	Updated  time.Time
 }
 
-// PageNav is a struct that provides a set of pointers for navigating a
+// Nav is a struct that provides a set of pointers for navigating a
 // across a set of pages. All values are initialised to nil and will only
 // be populated manually or by calling `BuildSitemap`.
-type PageNav struct {
+type Nav struct {
 	All      []*Page
 	Root     *Page
 	Parent   *Page
@@ -249,7 +249,7 @@ func NewPage(path string) Page {
 	return Page{
 		Title:    titleFromPath(path),
 		Path:     path,
-		Nav:      PageNav{},
+		Nav:      Nav{},
 		Meta:     make(Meta),
 		Contents: make([]string, 0),
 		Assets:   make([]string, 0),
