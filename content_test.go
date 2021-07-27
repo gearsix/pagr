@@ -16,22 +16,22 @@ func TestLoadContentDir(t *testing.T) {
 		t.Errorf("failed to create test content: %s", err)
 	}
 
-	var c Content
-	if c, err = LoadContentDir(tdir); err != nil {
+	var p []Page
+	if p, err = LoadContentDir(tdir); err != nil {
 		t.Fatalf("LoadContentDir failed: %s", err)
 	}
 
-	validateContents(t, c, err)
+	validateContents(t, p, err)
 }
 
-func validateContents(t *testing.T, c Content, e error) {
-	if len(c) != len(contents)-1 {
+func validateContents(t *testing.T, pages []Page, e error) {
+	if len(pages) != len(contents)-1 {
 		t.Fatalf("invalid number of pages returned (%d should be %d)",
-			len(c), len(contents))
+			len(pages), len(contents))
 	}
 
 	var last time.Time
-	for i, p := range c {
+	for i, p := range pages {
 		if len(p.Title) == 0 {
 			t.Fatal("empty Title for page:", p)
 		}
@@ -51,7 +51,7 @@ func validateContents(t *testing.T, c Content, e error) {
 		if i == 0 {
 			last = p.Updated
 		} else if p.Updated.Before(last) {
-			for _, pp := range c {
+			for _, pp := range pages {
 				t.Log(pp.Updated)
 			}
 			t.Fatal("Contents Pages returned in wrong order")

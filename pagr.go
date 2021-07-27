@@ -53,7 +53,7 @@ func main() {
 	}
 	vlog("loaded config: %s\n", config)
 
-	var c Content
+	var c []Page
 	c, err = LoadContentDir(config.Contents)
 	check(err)
 	log.Printf("loaded %d content pages", len(c))
@@ -69,7 +69,7 @@ func main() {
 	return
 }
 
-func build(config Config, pages Content, templates []suti.Template) {
+func build(config Config, pages []Page, templates []suti.Template) {
 	var err error
 	var out bytes.Buffer
 

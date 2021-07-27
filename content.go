@@ -60,11 +60,9 @@ func lastFileMod(fpath string) time.Time {
 	return t
 }
 
-type Content []Page
-
 // Sitemap parses `pages` to determine the `.PageNav` values for each element in `pages`
 // based on their `.Path` value. These values will be set in the returned Content
-func BuildSitemap(pages Content) Content {
+func BuildSitemap(pages []Page) []Page {
 	var root *Page
 	for i, p := range pages {
 		if p.Path == "/" {
@@ -122,7 +120,7 @@ func BuildSitemap(pages Content) Content {
 // filetype found in `SupportedContent`, will be parsed into a string of HTML
 // and appended to the `.Content` of the `Page` generated for it's parent
 // directory.
-func LoadContentDir(dir string) (c Content, e error) {
+func LoadContentDir(dir string) (p []Page, e error) {
 	if _, e = os.Stat(dir); e != nil {
 		return
 	}
@@ -187,13 +185,13 @@ func LoadContentDir(dir string) (c Content, e error) {
 	})
 
 	for _, page := range pages {
-		c = append(c, page)
+		p = append(p, page)
 	}
-	sort.SliceStable(c, func(i, j int) bool { return c[i].Updated.Before(c[j].Updated) })
+	sort.SliceStable(p, func(i, j int) bool { return p[i].Updated.Before(p[j].Updated) })
 
-	c = BuildSitemap(c)
+	p = BuildSitemap(p)
 
-	return c, e
+	return
 }
 
 func isSupportedContentExt(ext string) int {
