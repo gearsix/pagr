@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestLoadContentDir(t *testing.T) {
+func TestLoadPagesDir(t *testing.T) {
 	t.Parallel()
 
 	var err error
@@ -17,8 +17,8 @@ func TestLoadContentDir(t *testing.T) {
 	}
 
 	var p []Page
-	if p, err = LoadContentDir(tdir); err != nil {
-		t.Fatalf("LoadContentDir failed: %s", err)
+	if p, err = LoadPagesDir(tdir); err != nil {
+		t.Fatalf("LoadPagesDir failed: %s", err)
 	}
 
 	validateContents(t, p, err)
@@ -33,22 +33,22 @@ func validateContents(t *testing.T, pages []Page, e error) {
 	var last time.Time
 	for i, p := range pages {
 		if len(p.Title) == 0 {
-			t.Fatal("empty Title for page:", p)
+			t.Error("empty Title for page:", p)
 		}
 		if len(p.Path) == 0 {
-			t.Fatal("empty Path for page:", p)
+			t.Error("empty Path for page:", p)
 		}
 		if _, ok := p.Meta["page"]; !ok || len(p.Meta) == 0 {
-			t.Fatal("missing page Meta key for page:", p.Path)
+			t.Error("missing page Meta key for page:", p.Path)
 		}
 		if _, ok := p.Meta["default"]; !ok || len(p.Meta) == 0 {
-			t.Fatal("empty default Meta key for page:", p.Path)
+			t.Error("empty default Meta key for page:", p.Path)
 		}
 		if len(p.Contents) == 0 {
-			t.Fatal("empty Contents for page:", p.Path)
+			t.Error("empty Contents for page:", p.Path)
 		}
 		if len(p.Assets) == 0 {
-			t.Fatal("empty Assets for page:", p.Path)
+			t.Error("empty Assets for page:", p.Path)
 		}
 
 		if i == 0 {
@@ -57,7 +57,7 @@ func validateContents(t *testing.T, pages []Page, e error) {
 			for _, pp := range pages {
 				t.Log(pp.Updated)
 			}
-			t.Fatal("Contents Pages returned in wrong order")
+			t.Error("Contents Pages returned in wrong order")
 		}
 	}
 }

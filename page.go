@@ -79,7 +79,7 @@ func titleFromPath(path string) (title string) {
 	}
 	title = strings.TrimSuffix(title, filepath.Ext(title))
 	title = strings.ReplaceAll(title, "-", " ")
-	title = strings.Title(title)
+	//title = strings.Title(title)
 	return
 }
 
@@ -121,79 +121,63 @@ func isContentExt(ext string) int {
 	return -1
 }
 
-// LoadContentDir parses all files/directories in `dir` into a `Content`.
+// LoadPagesDir parses all files/directories in `dir` into a `Content`.
 // For each directory, a new `Page` element will be generated, any file with a
 // filetype found in `contentExts`, will be parsed into a string of HTML
 // and appended to the `.Content` of the `Page` generated for it's parent
 // directory.
-func LoadContentDir(dir string) (p []Page, e error) {
+func LoadPagesDir(dir string) (p []Page, e error) {
 	if _, e = os.Stat(dir); e != nil {
 		return
 	}
+	dir = strings.TrimSuffix(dir, "/")
 
 	pages := make(map[string]Page)
-	defaults := make(map[string]Meta)
-	if dir[len(dir)-1] != '/' {
-		dir += "/"
-	}
+	dmetas := make(map[string]Meta)
+
 	e = filepath.Walk(dir, func(fpath string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-
 		if strings.Contains(fpath, ".ignore") {
 			return nil
 		}
 
-		var path string
 		if info.IsDir() {
-			path = "/" + strings.TrimPrefix(fpath, dir)
-			page := NewPage(path)
-			for i, p := range path {
-				if p != '/' {
-					continue
-				}
-				dpath := path[:i]
-				if len(dpath) == 0 {
-					dpath = "/"
-				}
-				if _, ok := defaults[dpath]; ok {
-					page.Meta.MergeMeta(defaults[dpath], true)
-				}
-			}
-			pages[path] = page
-			return nil
-		}
-
-		path, _ = filepath.Split(fpath)
-		path = strings.TrimPrefix(path, dir)
-		path = "/" + strings.TrimSuffix(path, "/")
-		page := pages[path]
-
-		if strings.Contains(fpath, "page.") || strings.Contains(fpath, "defaults.") {
-			var m Meta
-			if err = suti.LoadDataFile(fpath, &m); err != nil {
-				return err
-			}
-			if strings.Contains(fpath, "page.") {
-				page.Meta.MergeMeta(m, true)
-			} else if strings.Contains(fpath, "defaults.") {
-				page.Meta.MergeMeta(m, false)
-				defaults[path] = m
-			}
-		} else if isContentExt(filepath.Ext(fpath)) > -1 {
-			err = page.NewContentFromFile(fpath)
+			path := pagePath(dir, fpath)
+			pages[path] = NewPage(path)
 		} else {
-			page.Assets = append(page.Assets, fpath)
-		}
+			path := pagePath(dir, filepath.Dir(fpath))
+			page := pages[path]
 
-		pages[path] = page
-		return nil
+			if suti.IsSupportedDataLang(filepath.Ext(fpath)) > -1 {
+				var m Meta
+				if err = suti.LoadDataFile(fpath, &m); err == nil {
+					if strings.Contains(filepath.Base(fpath), "defaults.") {
+						if meta, ok := dmetas[path]; ok {
+							m.MergeMeta(meta, false)
+						}
+						dmetas[path] = m
+					} else {
+						page.Meta.MergeMeta(m, true)
+					}
+				}
+			} else if isContentExt(filepath.Ext(fpath)) > -1 {
+				err = page.NewContentFromFile(fpath)
+			} else if suti.IsSupportedDataLang(filepath.Ext(fpath)) == -1 {
+				page.Assets = append(page.Assets, filepath.Join(path, filepath.Base(fpath)))
+			}
+
+			pages[path] = page
+		}
+		return err
 	})
 
 	for _, page := range pages {
+		page.applyDefaults(dmetas)
 		p = append(p, page)
 	}
+
 	sort.SliceStable(p, func(i, j int) bool { return p[i].Updated.Before(p[j].Updated) })
 
 	p = BuildSitemap(p)
@@ -214,6 +198,14 @@ func (m Meta) MergeMeta(meta Meta, overwrite bool) {
 			m[k] = v
 		}
 	}
+}
+
+func pagePath(root, path string) string {
+	path = strings.TrimPrefix(path, root)
+	if len(path) == 0 {
+		path = "/"
+	}
+	return path
 }
 
 // Page is the data structure loaded from Content files/folders that
@@ -313,6 +305,21 @@ func (p *Page) NewContentFromFile(fpath string) (err error) {
 	}
 
 	return err
+}
+
+func (page *Page) applyDefaults(defaultMetas map[string]Meta) {
+	for i, p := range page.Path {
+		if p != '/' {
+			continue
+		}
+		path := page.Path[:i]
+		if len(path) == 0 {
+			path = "/"
+		}
+		if meta, ok := defaultMetas[path]; ok {
+			page.Meta.MergeMeta(meta, false)
+		}
+	}
 }
 
 // convertTextToHTML parses textual data from `in` and line-by-line converts
