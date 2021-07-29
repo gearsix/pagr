@@ -322,6 +322,48 @@ func (page *Page) applyDefaults(defaultMetas map[string]Meta) {
 	}
 }
 
+func (p *Page) CopyAssets(srcDir, outDir string) (err error) {
+	for _, a := range p.Assets {
+		var srcf *os.File
+		src := filepath.Join(srcDir, a)
+		if srcf, err = os.Open(src); err != nil {
+			return err
+		}
+		defer srcf.Close()
+
+		var dstf *os.File
+		dst := filepath.Join(outDir, a)
+		if err = os.MkdirAll(filepath.Dir(dst), 0777); err != nil {
+			return err
+		}
+		if dstf, err = os.OpenFile(dst, os.O_RDWR|os.O_CREATE, 0644); err != nil {
+			return err
+		}
+		defer dstf.Close()
+
+		if _, err = io.Copy(dstf, srcf); err != nil {
+			return err
+		}
+		dstf.Sync()
+	}
+	return
+}
+
+func (p *Page) Build(outDir string, t suti.Template) error {
+	if outb, err := t.Execute(p); err != nil {
+		return err
+	} else {
+		out := filepath.Join(outDir, p.Path, "index.html")
+		if err = os.MkdirAll(filepath.Dir(out), 0755); err != nil {
+			return err
+		}
+		if err = os.WriteFile(out, outb.Bytes(), 0644); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // convertTextToHTML parses textual data from `in` and line-by-line converts
 // it to HTML. Conversion rules are as follows:
 // - Blank lines (with escape characters trimmed) will close any opon tags

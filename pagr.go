@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
+	"flag"
 	"os"
 	"strings"
-	"flag"
+	"sync"
 	"path/filepath"
 	"log"
 	"notabug.org/gearsix/suti"
@@ -53,47 +53,55 @@ func main() {
 	}
 	vlog("loaded config: %s\n", config)
 
-	var c []Page
-	c, err = LoadPagesDir(config.Pages)
+	var p []Page
+	p, err = LoadPagesDir(config.Pages)
 	check(err)
-	log.Printf("loaded %d content pages", len(c))
+	log.Printf("loaded %d content pages", len(p))
 
 	var t []suti.Template
 	t, err = LoadTemplateDir(config.Templates)
 	check(err)
 	log.Printf("loaded %d template files", len(t))
 
-	build(config, c, t)
-	log.Println("pagr success")
+	htmlc := 0
+	assetc := 0
+	var wg sync.WaitGroup
+	for _, pg := range p {
+		var tmpl suti.Template
+		tmpl, err = findTemplate(pg, t)
+		if os.IsNotExist(err) {
+			log.Printf("warning: skipping '%s', failed to find template '%s'\n", pg.Path, pg.GetTemplate())
+			continue
+		} else {
+			check(err)
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			check(pg.Build(config.Output, tmpl))
+			check(pg.CopyAssets(config.Pages, config.Output))
+			vlog("-> %s", pg.Path)
+		}()
+		htmlc++
+		assetc += len(pg.Assets)
+	}
+	wg.Wait()
+	log.Printf("generated %d html files, copied %d asset files\n", htmlc, assetc)
 
+	log.Println("pagr success")
 	return
 }
 
-func build(config Config, pages []Page, templates []suti.Template) {
-	var err error
-	var out bytes.Buffer
-
-	outc := len(pages)
-	for _, pg := range pages {
-		out.Reset()
-		target := pg.GetTemplate()
-		for _, t := range templates {
-			tname := filepath.Base(t.Source)
-			if tname == target || strings.TrimSuffix(tname, filepath.Ext(tname)) == target {
-				if out, err = t.Execute(pg); err != nil {
-					log.Printf("Execution error in template '%s':\n", target)
-					check(err)
-				}
-				outp := filepath.Join(config.Output, pg.Path, "index.html")
-				check(os.MkdirAll(filepath.Dir(outp), 0755))
-				check(os.WriteFile(outp, out.Bytes(), 0644))
-				vlog("-> %s", outp)
-			}
-		}
-		if out.Len() == 0 {
-			log.Printf("warning: skipping '%s', failed to find template '%s'\n", pg.Path, target)
-			outc--
+func findTemplate(pg Page, templates []suti.Template) (suti.Template, error) {
+	var t suti.Template
+	err := os.ErrNotExist
+	target := pg.GetTemplate()
+	for _, t := range templates {
+		tname := filepath.Base(t.Source)
+		if tname == target || strings.TrimSuffix(tname, filepath.Ext(tname)) == target {
+			return t, nil
 		}
 	}
-	log.Printf("generated %d html files\n", outc)
+	return t, err
 }
+
