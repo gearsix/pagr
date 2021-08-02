@@ -95,8 +95,8 @@ func lastFileMod(fpath string) time.Time {
 	if dir, err := os.ReadDir(fpath); err != nil {
 		return t
 	} else {
-		for _, d := range dir {
-			if fd, err := d.Info(); err == nil && fd.ModTime().After(t) {
+		for i, d := range dir {
+			if fd, err := d.Info(); err == nil && (i == 0 || fd.ModTime().After(t)) {
 				t = fd.ModTime()
 			}
 		}
@@ -130,7 +130,7 @@ func LoadPagesDir(dir string) (p []Page, e error) {
 	if _, e = os.Stat(dir); e != nil {
 		return
 	}
-	dir = strings.TrimSuffix(dir, "/")
+	dir = filepath.Clean(strings.TrimSuffix(dir, "/"))
 
 	pages := make(map[string]Page)
 	dmetas := make(map[string]Meta)
@@ -145,7 +145,7 @@ func LoadPagesDir(dir string) (p []Page, e error) {
 
 		if info.IsDir() {
 			path := pagePath(dir, fpath)
-			pages[path] = NewPage(path)
+			pages[path] = NewPage(path, lastFileMod(fpath))
 		} else {
 			path := pagePath(dir, filepath.Dir(fpath))
 			page := pages[path]
@@ -235,7 +235,7 @@ type Nav struct {
 // NewPage returns a Page with init values. `.Title` will be set to the
 // value returned by titleFromPath(path), `.Path` will be set to `path`.
 // Updated is set to time.Now(). Any other values will simply be initialised.
-func NewPage(path string) Page {
+func NewPage(path string, updated time.Time) Page {
 	return Page{
 		Title:    titleFromPath(path),
 		Path:     path,
@@ -243,7 +243,7 @@ func NewPage(path string) Page {
 		Meta:     make(Meta),
 		Contents: make([]string, 0),
 		Assets:   make([]string, 0),
-		Updated:  lastFileMod(path),
+		Updated:  updated,
 	}
 }
 

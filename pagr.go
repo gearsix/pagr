@@ -76,12 +76,12 @@ func main() {
 			check(err)
 		}
 		wg.Add(1)
-		go func() {
+		go func(page Page) {
 			defer wg.Done()
-			check(pg.Build(config.Output, tmpl))
-			check(pg.CopyAssets(config.Pages, config.Output))
-			vlog("-> %s", pg.Path)
-		}()
+			check(page.Build(config.Output, tmpl))
+			check(page.CopyAssets(config.Pages, config.Output))
+			vlog("-> %s", page.Path)
+		}(pg)
 		htmlc++
 		assetc += len(pg.Assets)
 	}
