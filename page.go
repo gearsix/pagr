@@ -18,6 +18,8 @@ import (
 	"sort"
 )
 
+const timefmt = time.RFC822
+
 // Sitemap parses `pages` to determine the `.Nav` values for each element in `pages`
 // based on their `.Path` value. These values will be set in the returned Content
 func BuildSitemap(pages []Page) []Page {
@@ -30,44 +32,46 @@ func BuildSitemap(pages []Page) []Page {
 	}
 
 	for i, p := range pages {
-		p.Nav.Root = root
+		go func(i int, p Page) {
+			p.Nav.Root = root
 
-		pdepth := len(strings.Split(p.Path, "/")[1:])
-		if p.Path == "/" {
-			pdepth = 0
-		}
-
-		if pdepth == 1 && p.Path != "/" {
-			p.Nav.Parent = root
-		}
-
-		for j, pp := range pages {
-			ppdepth := len(strings.Split(pp.Path, "/")[1:])
-			if pp.Path == "/" {
-				ppdepth = 0
+			pdepth := len(strings.Split(p.Path, "/")[1:])
+			if p.Path == "/" {
+				pdepth = 0
 			}
 
-			p.Nav.All = append(p.Nav.All, &pages[j])
-			if p.Nav.Parent == nil && ppdepth == pdepth - 1 && strings.Contains(p.Path, pp.Path) {
-				p.Nav.Parent = &pages[j]
+			if pdepth == 1 && p.Path != "/" {
+				p.Nav.Parent = root
 			}
-			if ppdepth == pdepth + 1 && strings.Contains(pp.Path, p.Path) {
-				p.Nav.Children = append(p.Nav.Children, &pages[j])
-			}
-		}
 
-		var crumb string
-		for _, c := range strings.Split(p.Path, "/")[1:] {
-			crumb += "/" + c
 			for j, pp := range pages {
-				if pp.Path == crumb {
-					p.Nav.Crumbs = append(p.Nav.Crumbs, &pages[j])
-					break
+				ppdepth := len(strings.Split(pp.Path, "/")[1:])
+				if pp.Path == "/" {
+					ppdepth = 0
+				}
+
+				p.Nav.All = append(p.Nav.All, &pages[j])
+				if p.Nav.Parent == nil && ppdepth == pdepth - 1 && strings.Contains(p.Path, pp.Path) {
+					p.Nav.Parent = &pages[j]
+				}
+				if ppdepth == pdepth + 1 && strings.Contains(pp.Path, p.Path) {
+					p.Nav.Children = append(p.Nav.Children, &pages[j])
 				}
 			}
-		}
 
-		pages[i] = p
+			var crumb string
+			for _, c := range strings.Split(p.Path, "/")[1:] {
+				crumb += "/" + c
+				for j, pp := range pages {
+					if pp.Path == crumb {
+						p.Nav.Crumbs = append(p.Nav.Crumbs, &pages[j])
+						break
+					}
+				}
+			}
+
+			pages[i] = p
+		}(i, p)
 	}
 
 	return pages
@@ -78,7 +82,7 @@ func titleFromPath(path string) (title string) {
 		title = "Home"
 	}
 	title = strings.TrimSuffix(title, filepath.Ext(title))
-	title = strings.ReplaceAll(title, "-", " ")
+	//title = strings.ReplaceAll(title, "-", " ")
 	//title = strings.Title(title)
 	return
 }
@@ -178,7 +182,14 @@ func LoadPagesDir(dir string) (p []Page, e error) {
 		p = append(p, page)
 	}
 
-	sort.SliceStable(p, func(i, j int) bool { return p[i].Updated.Before(p[j].Updated) })
+	sort.SliceStable(p, func(i, j int) bool {
+		if it, err := time.Parse(timefmt, p[i].Updated); err == nil {
+			if jt, err := time.Parse(timefmt, p[j].Updated); err == nil {
+				return it.After(jt)
+			}
+		}
+		return false
+	})
 
 	p = BuildSitemap(p)
 
@@ -218,7 +229,7 @@ type Page struct {
 	Meta     Meta
 	Contents []string
 	Assets   []string
-	Updated  time.Time
+	Updated  string
 }
 
 // Nav is a struct that provides a set of pointers for navigating a
@@ -243,7 +254,7 @@ func NewPage(path string, updated time.Time) Page {
 		Meta:     make(Meta),
 		Contents: make([]string, 0),
 		Assets:   make([]string, 0),
-		Updated:  updated,
+		Updated:  updated.Format(timefmt),
 	}
 }
 

@@ -51,9 +51,14 @@ func validateContents(t *testing.T, pages []Page, e error) {
 			t.Error("empty Assets for page:", p.Path)
 		}
 
+		var pt time.Time
+		if pt, e = time.Parse(timefmt, p.Updated); e != nil {
+			t.Fatal(e)
+		}
+
 		if i == 0 {
-			last = p.Updated
-		} else if p.Updated.Before(last) {
+			last = pt
+		} else if pt.Before(last) {
 			for _, pp := range pages {
 				t.Log(pp.Updated)
 			}
