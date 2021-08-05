@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"os"
 	"time"
 	"testing"
@@ -32,7 +33,7 @@ func validateContents(t *testing.T, pages []Page, e error) {
 
 	var last time.Time
 	for i, p := range pages {
-		if len(p.Title) == 0 {
+		if len(p.Slug) == 0 && p.Slug != filepath.Base(p.Path) {
 			t.Error("empty Title for page:", p)
 		}
 		if len(p.Path) == 0 {

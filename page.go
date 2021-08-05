@@ -77,16 +77,6 @@ func BuildSitemap(pages []Page) []Page {
 	return pages
 }
 
-func titleFromPath(path string) (title string) {
-	if title = filepath.Base(path); title == "/" {
-		title = "Home"
-	}
-	title = strings.TrimSuffix(title, filepath.Ext(title))
-	//title = strings.ReplaceAll(title, "-", " ")
-	//title = strings.Title(title)
-	return
-}
-
 func lastFileMod(fpath string) time.Time {
 	t := time.Now() // default/error ret
 	if fd, e := os.Stat(fpath); e != nil {
@@ -223,7 +213,7 @@ func pagePath(root, path string) string {
 // gets passed to templates for execution after Content has been loaded.
 // This is the data structure to reference when writing a template!
 type Page struct {
-	Title    string
+	Slug     string
 	Path     string
 	Nav      Nav
 	Meta     Meta
@@ -248,7 +238,7 @@ type Nav struct {
 // Updated is set to time.Now(). Any other values will simply be initialised.
 func NewPage(path string, updated time.Time) Page {
 	return Page{
-		Title:    titleFromPath(path),
+		Slug:     filepath.Base(path),
 		Path:     path,
 		Nav:      Nav{},
 		Meta:     make(Meta),
