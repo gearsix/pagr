@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io/fs"
 	"os"
 	"strings"
 	"sync"
@@ -64,13 +65,14 @@ func main() {
 	log.Printf("loaded %d template files", len(t))
 
 	htmlc := 0
-	assetc := 0
+	assetc := copyAssets(wg, config)
 	var wg sync.WaitGroup
 	for _, pg := range p {
 		var tmpl suti.Template
 		tmpl, err = findTemplate(pg, t)
 		if os.IsNotExist(err) {
-			log.Printf("warning: skipping '%s', failed to find template '%s'\n", pg.Path, pg.GetTemplate())
+			log.Printf("warning: skipping '%s', failed to find template '%s'\n",
+				pg.Path, pg.GetTemplate())
 			continue
 		} else {
 			check(err)
@@ -105,3 +107,16 @@ func findTemplate(pg Page, templates []suti.Template) (suti.Template, error) {
 	return t, err
 }
 
+func copyAssets(wg sync.WaitGroup, cfg Config) (n int) {
+	for _, a := range cfg.Assets {
+		filepath.Walk(a, func(path string, info fs.FileInfo, err error) error {
+			if !info.IsDir() {
+				n++
+				wg.Add(1)
+				go CopyFile(path, filepath.Join(cfg.Output, strings.TrimPrefix(path, filepath.Clean(a))))
+			}
+			return err
+		})
+	}
+	return n
+}
