@@ -65,8 +65,8 @@ func main() {
 	log.Printf("loaded %d template files", len(t))
 
 	htmlc := 0
-	assetc := copyAssets(wg, config)
 	var wg sync.WaitGroup
+	assetc := copyAssets(wg, config)
 	for _, pg := range p {
 		var tmpl suti.Template
 		tmpl, err = findTemplate(pg, t)
