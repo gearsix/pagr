@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+
+// TODO update this (after finishing below)
 func TestLoadPagesDir(t *testing.T) {
 	t.Parallel()
 
@@ -200,5 +202,34 @@ func TestNewPage(test *testing.T) {
 		p.Updated != updated.Format(timefmt) {
 			test.Fatal("invalid Page", p)
 	}
+}
+
+func TestGetTemplate(test *testing.T) {
+	test.Parallel()
+
+	p := NewPage("/test", time.Now())
+	if p.GetTemplate() != DefaultTemplate {
+		test.Fatalf("'%s' not returned from GetTemplate()", DefaultTemplate)
+	}
+	p.Meta["Template"] = "test1"
+	if p.GetTemplate() != "test1" {
+		test.Fatalf("'test1' not returned from GetTemplate()")
+	}
+	p.Meta["template"] = "test2"
+	if p.GetTemplate() != "test2" {
+		test.Fatalf("'test2' not returned from GetTemplate()")
+	}
+}
+
+func TestNewContentFromFile(test *testing.T) {
+}
+
+func TestCopyFile(test *testing.T) {
+}
+
+func TestCopyAssets(test *testing.T) {
+}
+
+func TestBuild(test *testing.T) {
 }
 
