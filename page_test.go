@@ -186,3 +186,19 @@ func TestMergeMeta(test *testing.T) {
 	}
 }
 
+func TestNewPage(test *testing.T) {
+	test.Parallel()
+
+	const path = "/test/path"
+	var updated = time.Now()
+
+	p := NewPage(path, updated)
+
+	if p.Title != "Path" ||
+		p.Slug != "path" ||
+		p.Path != path ||
+		p.Updated != updated.Format(timefmt) {
+			test.Fatal("invalid Page", p)
+	}
+}
+
