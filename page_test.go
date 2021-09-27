@@ -148,3 +148,41 @@ func createProjectContents(dir string) (err error) {
 
 	return
 }
+
+func TestMergeMeta(test *testing.T) {
+	test.Parallel()
+
+	var orig Meta
+	merge := make(Meta)
+	merge["test"] = "overwritten"
+	merge["new"] = "data"
+
+	orig = make(Meta)
+	orig["test"] = "data"
+	orig.MergeMeta(merge, false)
+	if val, ok := orig["test"]; ok {
+		if val == "overwritten" {
+			test.Fatalf("invalid 'test' value: %s", val)
+		}
+	} else if !ok {
+		test.Fatalf("unable to parse 'test' key")
+	}
+	if _, ok := orig["new"]; !ok {
+		test.Fatalf("unable to parse 'new' key")
+	}
+
+	orig = make(Meta)
+	orig["test"] = "data"
+	orig.MergeMeta(merge, true)
+	if val, ok := orig["test"]; ok {
+		if val != "overwritten" {
+			test.Fatalf("invalid 'test' value: %s", val)
+		}
+	} else if !ok {
+		test.Fatalf("unable to parse 'test' key")
+	}
+	if _, ok := orig["new"]; !ok {
+		test.Fatalf("unable to parse 'new' key")
+	}
+}
+
