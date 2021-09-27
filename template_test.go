@@ -21,7 +21,7 @@ func TestLoadTemplateDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(tmpls) != len(templates) * 2 { // *2 = partial
+	if len(tmpls) != len(templates) * 2 { // * 2 for partials
 		t.Fatalf("number of returned templates is %d (should be %d)",
 			len(tmpls), len(templates))
 	}
@@ -42,10 +42,14 @@ func createProjectTemplates(dir string) error {
 
 	for ext, data := range templates {
 		writef(fmt.Sprintf("%s/%s.%s", dir, ext, ext), data)
+		writef(fmt.Sprintf("%s/%s.ignore.%s", dir, ext, ext), data)
+		writef(fmt.Sprintf("%s/%s.%s.ignore", dir, ext, ext), data)
 
 		pdir := filepath.Join(dir, ext)
 		err = os.Mkdir(pdir, 0755)
 		writef(fmt.Sprintf("%s/partial.%s", pdir, ext), data)
+		writef(fmt.Sprintf("%s/partial.ignore.%s", pdir, ext), data)
+		writef(fmt.Sprintf("%s/partial.%s.ignore", pdir, ext), data)
 
 		if err != nil {
 			break

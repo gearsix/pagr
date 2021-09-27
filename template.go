@@ -41,7 +41,7 @@ func LoadTemplateDir(dir string) ([]suti.Template, error) {
 	} else {
 		err = nil
 		for _, t := range tpaths {
-			if filepath.Ext(t) == ".ignore" {
+			if strings.Contains(t, ".ignore") {
 				continue
 			}
 			paths[t] = make([]string, 0)
