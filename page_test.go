@@ -8,25 +8,7 @@ import (
 	"testing"
 )
 
-
-// TODO update this (after finishing below)
-func TestLoadPagesDir(t *testing.T) {
-	t.Parallel()
-
-	var err error
-	tdir := t.TempDir()
-	if err = createProjectContents(tdir); err != nil {
-		t.Errorf("failed to create test content: %s", err)
-	}
-
-	var p []Page
-	if p, err = LoadPagesDir(tdir); err != nil {
-		t.Fatalf("LoadPagesDir failed: %s", err)
-	}
-
-	validateContents(t, p, err)
-}
-
+// helper functions
 func validateContents(t *testing.T, pages []Page, e error) {
 	if len(pages) != len(contents)-1 {
 		t.Fatalf("invalid number of pages returned (%d should be %d)",
@@ -151,6 +133,24 @@ func createProjectContents(dir string) (err error) {
 	return
 }
 
+// TODO update this (after finishing below)
+func TestLoadPagesDir(t *testing.T) {
+	t.Parallel()
+
+	var err error
+	tdir := t.TempDir()
+	if err = createProjectContents(tdir); err != nil {
+		t.Errorf("failed to create test content: %s", err)
+	}
+
+	var p []Page
+	if p, err = LoadPagesDir(tdir); err != nil {
+		t.Fatalf("LoadPagesDir failed: %s", err)
+	}
+
+	validateContents(t, p, err)
+}
+
 func TestMergeMeta(test *testing.T) {
 	test.Parallel()
 
@@ -222,14 +222,95 @@ func TestGetTemplate(test *testing.T) {
 }
 
 func TestNewContentFromFile(test *testing.T) {
+	test.Parallel()
+
+	var err error
+	contents := map[string]string {
+		"txt": `test`,
+		"md": "**test**\ntest",
+		"gfm": "**test**\ntest",
+		"cm": "**test**",
+		"html": `<b>test</b>`,
+	}
+
+	tdir := test.TempDir()
+	contentsPath := func(ftype string) string {
+		return tdir + "/test." + ftype
+	}
+
+	for ftype, data := range contents {
+		if err = os.WriteFile(contentsPath(ftype), []byte(data), 0666); err != nil {
+			test.Error("TestNewContentFromFile setup failed:", err)
+		}
+	}
+
+	var p Page
+	for ftype := range contents {
+		if err = p.NewContentFromFile(contentsPath(ftype)); err != nil {
+			test.Fatal("NewContentFromFile failed for", ftype, err)
+		}
+	}
 }
 
 func TestCopyFile(test *testing.T) {
+	test.Parallel()
+
+	var err error
+	tdir := test.TempDir()
+	src := tdir + "/src"
+	dst := tdir + "/dst"
+	data := []byte("data")
+	if err = os.WriteFile(src, data, 0666); err != nil {
+		test.Error("setup failed, could not write", tdir+"/src")
+	}
+
+	if err = CopyFile(src, dst); err != nil {
+		test.Fatal("CopyFile failed", err)
+	}
+	if _, err = os.Stat(dst); err != nil {
+		test.Fatalf("could not stat '%s'", dst)
+	}
+	var buf []byte
+	if buf, err = os.ReadFile(dst); err != nil {
+		test.Errorf("could not read '%s'", dst)
+	} else if len(buf) < len(data) {
+		test.Fatalf("not all data (%s) copied to '%s' (%s)", data, dst, buf)
+	} else if string(buf) != string(data) {
+		test.Fatalf("copied data (%s) does not match source (%s)", buf, data)
+	}
 }
 
 func TestCopyAssets(test *testing.T) {
+	test.Parallel()
+
+	var p Page
+	var err error
+
+	srcDir := test.TempDir()
+	src := []string{"1","2","3","4"}
+
+	for _, fname := range src {
+		p.Assets = append(p.Assets, fname)
+		path := filepath.Join(srcDir, fname)
+		if _, err = os.Create(path); err != nil {
+			test.Fatalf("failed to create source file '%s'", path)
+		}
+	}
+
+	dstDir := test.TempDir()
+	if err = p.CopyAssets(srcDir, dstDir); err != nil {
+		test.Fatal("CopyAssets failed", err)
+	}
+	for _, fname := range src {
+		if _, err := os.Stat(dstDir+"/"+fname); err != nil {
+			test.Fatal("missing file", dstDir+"/"+fname)
+		}
+	}
 }
 
 func TestBuild(test *testing.T) {
+	test.Parallel()
+
+	// BOOKMARK
 }
 

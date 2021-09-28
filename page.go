@@ -360,9 +360,7 @@ func CopyFile(src, dst string) (err error) {
 	if _, err = io.Copy(dstf, srcf); err != nil {
 		return err
 	}
-	dstf.Sync()
-
-	return
+	return dstf.Sync()
 }
 
 func (p *Page) Build(outDir string, t suti.Template) error {
