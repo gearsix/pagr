@@ -363,19 +363,14 @@ func CopyFile(src, dst string) (err error) {
 	return dstf.Sync()
 }
 
-func (p *Page) Build(outDir string, t suti.Template) error {
-	if outb, err := t.Execute(p); err != nil {
-		return err
-	} else {
-		out := filepath.Join(outDir, p.Path, "index.html")
-		if err = os.MkdirAll(filepath.Dir(out), 0755); err != nil {
-			return err
-		}
-		if err = os.WriteFile(out, outb.Bytes(), 0644); err != nil {
-			return err
+func (p *Page) Build(outDir string, t suti.Template) (out string, err error) {
+	if outb, err := t.Execute(p); err == nil {
+		out = filepath.Join(outDir, p.Path, "index.html")
+		if err = os.MkdirAll(filepath.Dir(out), 0755); err == nil {
+			err = os.WriteFile(out, outb.Bytes(), 0644)
 		}
 	}
-	return nil
+	return out, err
 }
 
 // convertTextToHTML parses textual data from `in` and line-by-line converts

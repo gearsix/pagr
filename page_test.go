@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"os"
 	"time"
+	"notabug.org/gearsix/suti"
 	"testing"
 )
 
@@ -311,6 +312,22 @@ func TestCopyAssets(test *testing.T) {
 func TestBuild(test *testing.T) {
 	test.Parallel()
 
-	// BOOKMARK
+	// setup
+	var err error
+	tdir := test.TempDir()
+	p := NewPage("/test", time.Now())
+	t, err := suti.LoadTemplateString("tmpl", "test", "{{.Title}}")
+
+	var fpath string
+	if fpath, err = p.Build(tdir, t); err != nil {
+		test.Fatal(err)
+	}
+	var fbuf []byte
+	if fbuf, err = os.ReadFile(fpath); err != nil {
+		test.Fatal(err)
+	}
+	if string(fbuf) != "Test" {
+		test.Fatalf("invalid result parsed: '%s', expected: 'Test'", string(fbuf))
+	}
 }
 

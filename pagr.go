@@ -80,7 +80,8 @@ func main() {
 		wg.Add(1)
 		go func(page Page) {
 			defer wg.Done()
-			check(page.Build(config.Output, tmpl))
+			_, err = page.Build(config.Output, tmpl)
+			check(err)
 			check(page.CopyAssets(config.Pages, config.Output))
 			vlog("-> %s", page.Path)
 		}(pg)
