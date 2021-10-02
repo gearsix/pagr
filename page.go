@@ -86,13 +86,15 @@ func lastFileMod(fpath string) time.Time {
 	} else {
 		t = fd.ModTime()
 	}
-	if dir, err := os.ReadDir(fpath); err != nil {
+
+	dir, err := os.ReadDir(fpath)
+	if err != nil {
 		return t
-	} else {
-		for i, d := range dir {
-			if fd, err := d.Info(); err == nil && (i == 0 || fd.ModTime().After(t)) {
-				t = fd.ModTime()
-			}
+	}
+
+	for i, d := range dir {
+		if fd, err := d.Info(); err == nil && (i == 0 || fd.ModTime().After(t)) {
+			t = fd.ModTime()
 		}
 	}
 	return t
@@ -223,7 +225,6 @@ func pagePath(root, path string) string {
 // gets passed to templates for execution after Content has been loaded.
 // This is the data structure to reference when writing a template!
 type Page struct {
-	Title    string
 	Slug     string
 	Path     string
 	Nav      Nav
@@ -244,16 +245,14 @@ type Nav struct {
 	Crumbs   []*Page
 }
 
-// NewPage returns a Page with init values. `.Title` will be set to the
-// value returned by titleFromPath(path), `.Path` will be set to `path`.
+// NewPage returns a Page with init values. `.Path` will be set to `path`.
 // Updated is set to time.Now(). Any other values will simply be initialised.
 func NewPage(path string, updated time.Time) Page {
 	return Page{
-		Title:    titleFromPath(path),
 		Slug:     filepath.Base(path),
 		Path:     path,
 		Nav:      Nav{},
-		Meta:     make(Meta),
+		Meta:     Meta{"Title": titleFromPath(path)},
 		Contents: make([]string, 0),
 		Assets:   make([]string, 0),
 		Updated:  updated.Format(timefmt),
@@ -364,10 +363,11 @@ func CopyFile(src, dst string) (err error) {
 }
 
 func (p *Page) Build(outDir string, t suti.Template) (out string, err error) {
-	if outb, err := t.Execute(p); err == nil {
+	var buf bytes.Buffer
+	if buf, err = t.Execute(p); err == nil {
 		out = filepath.Join(outDir, p.Path, "index.html")
 		if err = os.MkdirAll(filepath.Dir(out), 0755); err == nil {
-			err = os.WriteFile(out, outb.Bytes(), 0644)
+			err = os.WriteFile(out, buf.Bytes(), 0644)
 		}
 	}
 	return out, err
