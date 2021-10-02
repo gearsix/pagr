@@ -223,7 +223,6 @@ func pagePath(root, path string) string {
 // gets passed to templates for execution after Content has been loaded.
 // This is the data structure to reference when writing a template!
 type Page struct {
-	Title    string
 	Slug     string
 	Path     string
 	Nav      Nav
@@ -244,16 +243,15 @@ type Nav struct {
 	Crumbs   []*Page
 }
 
-// NewPage returns a Page with init values. `.Title` will be set to the
-// value returned by titleFromPath(path), `.Path` will be set to `path`.
+// NewPage returns a Page with init values. `.Path` will be set to `path`.
 // Updated is set to time.Now(). Any other values will simply be initialised.
 func NewPage(path string, updated time.Time) Page {
+	defaultMeta := Meta{"Title": titleFromPath(path), "Description": "TODO"}
 	return Page{
-		Title:    titleFromPath(path),
 		Slug:     filepath.Base(path),
 		Path:     path,
 		Nav:      Nav{},
-		Meta:     make(Meta),
+		Meta:     defaultMeta,
 		Contents: make([]string, 0),
 		Assets:   make([]string, 0),
 		Updated:  updated.Format(timefmt),
@@ -364,10 +362,11 @@ func CopyFile(src, dst string) (err error) {
 }
 
 func (p *Page) Build(outDir string, t suti.Template) (out string, err error) {
-	if outb, err := t.Execute(p); err == nil {
+	var buf bytes.Buffer
+	if buf, err = t.Execute(p); err == nil {
 		out = filepath.Join(outDir, p.Path, "index.html")
 		if err = os.MkdirAll(filepath.Dir(out), 0755); err == nil {
-			err = os.WriteFile(out, outb.Bytes(), 0644)
+			err = os.WriteFile(out, buf.Bytes(), 0644)
 		}
 	}
 	return out, err
