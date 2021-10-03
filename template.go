@@ -8,9 +8,9 @@ import (
 	"notabug.org/gearsix/suti"
 )
 
-// DefaultTemplate provides the default name for the template used
+// DefaultTemplateName provides the default name for the template used
 // when one isn't specified in a `Page.Meta`.
-const DefaultTemplate = "root"
+const DefaultTemplateName = "root"
 
 // loadPaths calls `filepath.Walk` on dir and loads all
 // non-directory filepaths in `dir`

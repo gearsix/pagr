@@ -262,14 +262,14 @@ func NewPage(path string, updated time.Time) Page {
 // GetTemplate will check if `p.Meta` has the key `template` or `Template`
 // (in the order) and return the value of the first existing key as a string.
 // If `.Meta` neither has the key `template` or `Template`, then it will
-// return `DefaultTemplate` from [./template.go].
+// return `DefaultTemplateName` from [./template.go].
 func (p *Page) GetTemplate() string {
 	if v, ok := p.Meta["template"]; ok {
 		return v.(string)
 	} else if v, ok = p.Meta["Template"]; ok {
 		return v.(string)
 	} else {
-		return DefaultTemplate
+		return DefaultTemplateName
 	}
 }
 
