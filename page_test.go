@@ -16,16 +16,17 @@ func validateContents(t *testing.T, pages []Page, e error) {
 			len(pages), len(contents))
 	}
 
-	var last time.Time
+	var last, pt time.Time
 	for i, p := range pages {
 		if len(p.Slug) == 0 && p.Slug != filepath.Base(p.Path) {
-			t.Error("empty Title for page:", p)
+			t.Errorf("empty Slug for page: '%s'. Should be '%s'", p.Slug, filepath.Base(p.Path))
 		}
 		if len(p.Path) == 0 {
 			t.Error("empty Path for page:", p)
 		}
+		// TODO test p.Nav here
 		if _, ok := p.Meta["page"]; !ok || len(p.Meta) == 0 {
-			t.Error("missing page Meta key for page:", p.Path)
+			t.Errorf("missing page Meta key for page: '%s'", p.Path)
 		}
 		if _, ok := p.Meta["default"]; !ok || len(p.Meta) == 0 {
 			t.Error("empty default Meta key for page:", p.Path)
@@ -36,8 +37,6 @@ func validateContents(t *testing.T, pages []Page, e error) {
 		if len(p.Assets) == 0 {
 			t.Error("empty Assets for page:", p.Path)
 		}
-
-		var pt time.Time
 		if pt, e = time.Parse(timefmt, p.Updated); e != nil {
 			t.Fatal(e)
 		}
@@ -134,22 +133,40 @@ func createProjectContents(dir string) (err error) {
 	return
 }
 
-// TODO update this (after finishing below)
-func TestLoadPagesDir(t *testing.T) {
-	t.Parallel()
+func TestBuildSitemap(test *testing.T) {
+	test.Parallel()
 
 	var err error
-	tdir := t.TempDir()
+	writef := func(path, data string) {
+		if err == nil {
+			err = os.WriteFile(path, []byte(data), 0644)
+		}
+	}
+
+	tdir := test.TempDir()
+	// TODO write files to pages dir
+
+	var p []Page
+	if p, err = LoadPagesDir(tdir); err != nil {
+		test.Errorf("LoadPagesDir failed: %s", err)
+	}
+	p = BuildSitemap(p)
+	// TODO validate p
+}
+
+func TestLoadPagesDir(test *testing.T) {
+	var err error
+	tdir := test.TempDir()
 	if err = createProjectContents(tdir); err != nil {
-		t.Errorf("failed to create test content: %s", err)
+		test.Errorf("failed to create test content: %s", err)
 	}
 
 	var p []Page
 	if p, err = LoadPagesDir(tdir); err != nil {
-		t.Fatalf("LoadPagesDir failed: %s", err)
+		test.Fatalf("LoadPagesDir failed: %s", err)
 	}
 
-	validateContents(t, p, err)
+	validateContents(test, p, err)
 }
 
 func TestMergeMeta(test *testing.T) {
@@ -197,11 +214,8 @@ func TestNewPage(test *testing.T) {
 
 	p := NewPage(path, updated)
 
-	if p.Title != "Path" ||
-		p.Slug != "path" ||
-		p.Path != path ||
-		p.Updated != updated.Format(timefmt) {
-			test.Fatal("invalid Page", p)
+	if p.Slug != "path" || p.Path != path || p.Updated != updated.Format(timefmt) {
+		test.Fatal("invalid Page", p)
 	}
 }
 
@@ -209,8 +223,8 @@ func TestGetTemplate(test *testing.T) {
 	test.Parallel()
 
 	p := NewPage("/test", time.Now())
-	if p.GetTemplate() != DefaultTemplate {
-		test.Fatalf("'%s' not returned from GetTemplate()", DefaultTemplate)
+	if p.GetTemplate() != DefaultTemplateName {
+		test.Fatalf("'%s' not returned from GetTemplate()", DefaultTemplateName)
 	}
 	p.Meta["Template"] = "test1"
 	if p.GetTemplate() != "test1" {
