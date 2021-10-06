@@ -158,7 +158,7 @@ func LoadPagesDir(dir string) (p []Page, e error) {
 
 			if suti.IsSupportedDataLang(filepath.Ext(fpath)) > -1 {
 				var m Meta
-				if err = suti.LoadDataFile(fpath, &m); err == nil {
+				if err = suti.LoadDataFilepath(fpath, &m); err == nil {
 					if strings.Contains(filepath.Base(fpath), "defaults.") {
 						if meta, ok := dmetas[path]; ok {
 							m.MergeMeta(meta, false)
@@ -263,7 +263,7 @@ func NewPage(path string, updated time.Time) Page {
 // (in the order) and return the value of the first existing key as a string.
 // If `.Meta` neither has the key `template` or `Template`, then it will
 // return `DefaultTemplateName` from [./template.go].
-func (p *Page) GetTemplate() string {
+func (p *Page) TemplateName() string {
 	if v, ok := p.Meta["template"]; ok {
 		return v.(string)
 	} else if v, ok = p.Meta["Template"]; ok {

@@ -52,7 +52,7 @@ func NewConfigFromFile(fpath string) (cfg Config, err error) {
 		return
 	}
 
-	if err = suti.LoadDataFile(fpath, &cfg); err != nil {
+	if err = suti.LoadDataFilepath(fpath, &cfg); err != nil {
 		return
 	}
 

@@ -137,12 +137,13 @@ func TestBuildSitemap(test *testing.T) {
 	test.Parallel()
 
 	var err error
+	/*
 	writef := func(path, data string) {
 		if err == nil {
 			err = os.WriteFile(path, []byte(data), 0644)
 		}
 	}
-
+	*/
 	tdir := test.TempDir()
 	// TODO write files to pages dir
 
@@ -219,20 +220,20 @@ func TestNewPage(test *testing.T) {
 	}
 }
 
-func TestGetTemplate(test *testing.T) {
+func TestTemplateName(test *testing.T) {
 	test.Parallel()
 
 	p := NewPage("/test", time.Now())
-	if p.GetTemplate() != DefaultTemplateName {
-		test.Fatalf("'%s' not returned from GetTemplate()", DefaultTemplateName)
+	if p.TemplateName() != DefaultTemplateName {
+		test.Fatalf("'%s' not returned from TemplateName()", DefaultTemplateName)
 	}
 	p.Meta["Template"] = "test1"
-	if p.GetTemplate() != "test1" {
-		test.Fatalf("'test1' not returned from GetTemplate()")
+	if p.TemplateName() != "test1" {
+		test.Fatalf("'test1' not returned from TemplateName()")
 	}
 	p.Meta["template"] = "test2"
-	if p.GetTemplate() != "test2" {
-		test.Fatalf("'test2' not returned from GetTemplate()")
+	if p.TemplateName() != "test2" {
+		test.Fatalf("'test2' not returned from TemplateName()")
 	}
 }
 
@@ -330,7 +331,10 @@ func TestBuild(test *testing.T) {
 	var err error
 	tdir := test.TempDir()
 	p := NewPage("/test", time.Now())
-	t, err := suti.LoadTemplateString("tmpl", "test", "{{.Title}}")
+	t, err := suti.LoadTemplateString("tmpl", "test", `{{.Meta.Title}} {{template "p" .}}`, map[string]string{"p": "p"})
+	if err != nil {
+		test.Error(err)
+	}
 
 	var fpath string
 	if fpath, err = p.Build(tdir, t); err != nil {
@@ -340,8 +344,8 @@ func TestBuild(test *testing.T) {
 	if fbuf, err = os.ReadFile(fpath); err != nil {
 		test.Fatal(err)
 	}
-	if string(fbuf) != "Test" {
-		test.Fatalf("invalid result parsed: '%s', expected: 'Test'", string(fbuf))
+	if string(fbuf) != "Test p" {
+		test.Fatalf("invalid result parsed: '%s', expected: 'Test p'", string(fbuf))
 	}
 }
 

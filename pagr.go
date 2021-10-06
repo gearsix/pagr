@@ -72,7 +72,7 @@ func main() {
 		tmpl, err = findTemplate(pg, t)
 		if os.IsNotExist(err) {
 			log.Printf("warning: skipping '%s', failed to find template '%s'\n",
-				pg.Path, pg.GetTemplate())
+				pg.Path, pg.TemplateName())
 			continue
 		} else {
 			check(err)
@@ -95,13 +95,11 @@ func main() {
 	return
 }
 
-func findTemplate(pg Page, templates []suti.Template) (suti.Template, error) {
+func findTemplate(p Page, templates []suti.Template) (suti.Template, error) {
 	var t suti.Template
 	err := os.ErrNotExist
-	target := pg.GetTemplate()
 	for _, t := range templates {
-		tname := filepath.Base(t.Source)
-		if tname == target || strings.TrimSuffix(tname, filepath.Ext(tname)) == target {
+		if t.Name == p.TemplateName() {
 			return t, nil
 		}
 	}

@@ -29,6 +29,7 @@ func TestLoadTemplateDir(t *testing.T) {
 
 var templates = map[string]string{ // [ext]template
 	"tmpl": "{{.Contents}}",
+	"hmpl": "{{.Contents}}",
 	"mst": "{{Contents}}",
 }
 
