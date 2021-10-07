@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"io/fs"
 	"strings"
-	"os"
 	"notabug.org/gearsix/suti"
 )
 
@@ -12,57 +11,47 @@ import (
 // when one isn't specified in a `Page.Meta`.
 const DefaultTemplateName = "root"
 
-// loadPaths calls `filepath.Walk` on dir and loads all
-// non-directory filepaths in `dir`
-func loadPaths(dir string) ([]string, error) {
-	var r []string
-	err := filepath.Walk(dir,
-		func(fpath string, info fs.FileInfo, e error) error {
-			if e != nil {
-				return e
-			}
-			if !info.IsDir() {
-				r = append(r, fpath)
-			}
-			return e
-	})
-	return r, err
-}
-
 // LoadTemplateDir loads all files in `dir` that are not directories as a `suti.Template`
 // by calling `suti.LoadTemplateFile`. Partials for each template will be parsed from all
 // files in a directory matching the base filename of the template (not including
 // extension) if it exists.
-func LoadTemplateDir(dir string) ([]suti.Template, error) {
-	paths := make(map[string][]string) // [template][]partials
+func LoadTemplateDir(dir string) (templates []suti.Template, err error) {
+	templatePaths := make(map[string][]string) // map[rootPath][]partialPaths...
 
-	if tpaths, err := loadPaths(dir); err != nil && !os.IsNotExist(err) {
-		return nil, err
-	} else {
-		err = nil
-		for _, t := range tpaths {
-			if strings.Contains(t, ".ignore") {
-				continue
-			}
-			paths[t] = make([]string, 0)
-			dir, file := filepath.Split(t)
-			ppath := filepath.Join(dir, strings.TrimSuffix(file, filepath.Ext(file)))
-			for _, p := range tpaths {
-				if !strings.Contains(p, ".ignore") && strings.Contains(p, ppath) && p != t {
-					paths[t] = append(paths[t], p)
+	err = filepath.Walk(dir, func(path string, info fs.FileInfo, e error) error {
+		if e != nil || info.IsDir() || strings.Contains(path, ".ignore") {
+			return e
+		}
+
+		templatePaths[path] = make([]string, 0)
+		return e
+	})
+
+	err = filepath.Walk(dir, func(path string, info fs.FileInfo, e error) error {
+		if e != nil || info.IsDir() || strings.Contains(path, ".ignore") {
+			return e
+		}
+
+		for t, _ := range templatePaths {
+			if strings.Contains(path, filepath.Dir(t)) &&
+				filepath.Ext(t) == filepath.Ext(path) {
+					templatePaths[t] = append(templatePaths[t], path)
 				}
+		}
+		return e
+	})
+
+
+	if err == nil {
+		var t suti.Template
+		for rootPath, partialPaths := range templatePaths {
+			t, err = suti.LoadTemplateFilepath(rootPath, partialPaths...)
+			if err != nil {
+				break
 			}
+			templates = append(templates, t)
 		}
 	}
 
-	var ret []suti.Template
-	for t, partials := range paths {
-		tmpl, err := suti.LoadTemplateFilepath(t, partials...)
-		if err != nil {
-			return nil, err
-		}
-		ret = append(ret, tmpl)
-	}
-
-	return ret, nil
+	return
 }

@@ -42,9 +42,9 @@ func createProjectTemplates(dir string) error {
 	}
 
 	for ext, data := range templates {
-		writef(fmt.Sprintf("%s/%s.%s", dir, ext, ext), data)
-		writef(fmt.Sprintf("%s/%s.ignore.%s", dir, ext, ext), data)
-		writef(fmt.Sprintf("%s/%s.%s.ignore", dir, ext, ext), data)
+		writef(fmt.Sprintf("%s/root.%s", dir, ext), data)
+		writef(fmt.Sprintf("%s/root.ignore.%s", dir, ext), data)
+		writef(fmt.Sprintf("%s/root.%s.ignore", dir, ext), data)
 
 		pdir := filepath.Join(dir, ext)
 		err = os.Mkdir(pdir, 0755)
