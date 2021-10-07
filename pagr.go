@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"flag"
 	"io/fs"
 	"os"
@@ -26,7 +27,7 @@ func vlog(fmt string, args ...interface{}) {
 func check(err error) {
 	if err != nil {
 		if verbose {
-			log.Panic(err)
+			log.Panic(err.Error())
 		} else {
 			log.Fatalf("ERROR! %s\n", err)
 		}
@@ -67,26 +68,20 @@ func main() {
 	htmlc := 0
 	var wg sync.WaitGroup
 	assetc := copyAssets(wg, config)
+	log.Printf("copying %d assets\n", assetc)
 	for _, pg := range p {
-		var tmpl suti.Template
-		tmpl, err = findTemplate(pg, t)
-		if os.IsNotExist(err) {
-			log.Printf("warning: skipping '%s', failed to find template '%s'\n",
-				pg.Path, pg.TemplateName())
-			continue
-		} else {
-			check(err)
-		}
 		wg.Add(1)
-		go func(page Page) {
+		go func (p Page) {
 			defer wg.Done()
-			_, err = page.Build(config.Output, tmpl)
-			check(err)
-			check(page.CopyAssets(config.Pages, config.Output))
-			vlog("-> %s", page.Path)
+			if err := buildPage(config, p, t); err != nil {
+				log.Printf("skipping %s: %s\n", p.Path, err)
+				return
+			}
+			check(p.CopyAssets(config.Pages, config.Output))
+			vlog("-> %s", p.Path)
+			htmlc++
+			assetc += len(p.Assets)
 		}(pg)
-		htmlc++
-		assetc += len(pg.Assets)
 	}
 	wg.Wait()
 	log.Printf("generated %d html files, copied %d asset files\n", htmlc, assetc)
@@ -95,27 +90,45 @@ func main() {
 	return
 }
 
-func findTemplate(p Page, templates []suti.Template) (suti.Template, error) {
-	var t suti.Template
-	err := os.ErrNotExist
-	for _, t := range templates {
-		if t.Name == p.TemplateName() {
-			return t, nil
+func findTemplateIndex(p Page, templates []suti.Template) (t int) {
+	for t, template := range templates {
+		if template.Name == p.TemplateName() {
+			return t
 		}
 	}
-	return t, err
+	return -1
+}
+
+func buildPage(cfg Config, p Page, t []suti.Template) error {
+	var tmpl *suti.Template
+	for i, template := range t {
+		if template.Name == p.TemplateName() {
+			tmpl = &t[i]
+		}
+	}
+	if tmpl == nil {
+		return fmt.Errorf("failed to find template '%s'", p.TemplateName())
+	}
+
+	_, err := p.Build(cfg.Output, *tmpl)
+	check(err)
+	check(p.CopyAssets(cfg.Pages, cfg.Output))
+	return err
 }
 
 func copyAssets(wg sync.WaitGroup, cfg Config) (n int) {
 	for _, a := range cfg.Assets {
-		filepath.Walk(a, func(path string, info fs.FileInfo, err error) error {
-			if !info.IsDir() {
+		err := filepath.Walk(a, func(path string, info fs.FileInfo, err error) error {
+			if err == nil && !info.IsDir() {
 				n++
 				wg.Add(1)
 				go CopyFile(path, filepath.Join(cfg.Output, strings.TrimPrefix(path, filepath.Clean(a))))
 			}
 			return err
 		})
+		if !os.IsNotExist(err) {
+			check(err)
+		}
 	}
 	return n
 }
