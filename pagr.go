@@ -55,25 +55,25 @@ func main() {
 	}
 	vlog("loaded config: %s\n", config)
 
-	var p []Page
-	p, err = LoadPagesDir(config.Pages)
+	var pages []Page
+	pages, err = LoadPagesDir(config.Pages)
 	check(err)
-	log.Printf("loaded %d content pages", len(p))
+	log.Printf("loaded %d content pages", len(pages))
 
-	var t []suti.Template
-	t, err = LoadTemplateDir(config.Templates)
+	var templates []suti.Template
+	templates, err = LoadTemplateDir(config.Templates)
 	check(err)
-	log.Printf("loaded %d template files", len(t))
+	log.Printf("loaded %d template files", len(templates))
 
 	htmlc := 0
 	var wg sync.WaitGroup
 	assetc := copyAssets(wg, config)
 	log.Printf("copying %d assets\n", assetc)
-	for _, pg := range p {
+	for _, page := range pages {
 		wg.Add(1)
 		go func (p Page) {
 			defer wg.Done()
-			if err := buildPage(config, p, t); err != nil {
+			if err := buildPage(config, p, templates); err != nil {
 				log.Printf("skipping %s: %s\n", p.Path, err)
 				return
 			}
@@ -81,7 +81,7 @@ func main() {
 			vlog("-> %s", p.Path)
 			htmlc++
 			assetc += len(p.Assets)
-		}(pg)
+		}(page)
 	}
 	wg.Wait()
 	log.Printf("generated %d html files, copied %d asset files\n", htmlc, assetc)
