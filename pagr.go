@@ -68,7 +68,6 @@ func main() {
 	htmlc := 0
 	var wg sync.WaitGroup
 	assetc := copyAssets(wg, config)
-	log.Printf("copying %d assets\n", assetc)
 	for _, page := range pages {
 		wg.Add(1)
 		go func (p Page) {
