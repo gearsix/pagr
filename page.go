@@ -320,6 +320,7 @@ func (p *Page) NewContentFromFile(fpath string) (err error) {
 }
 
 func (page *Page) applyDefaults(defaultMetas map[string]Meta) {
+	initMeta := page.Meta
 	for i, p := range page.Path {
 		if p != '/' {
 			continue
@@ -329,9 +330,10 @@ func (page *Page) applyDefaults(defaultMetas map[string]Meta) {
 			path = "/"
 		}
 		if meta, ok := defaultMetas[path]; ok {
-			page.Meta.MergeMeta(meta, false)
+			page.Meta.MergeMeta(meta, true)
 		}
 	}
+	page.Meta.MergeMeta(initMeta, true)
 }
 
 func (p *Page) CopyAssets(srcDir, outDir string) (err error) {

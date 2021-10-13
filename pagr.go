@@ -78,12 +78,12 @@ func main() {
 			}
 			check(p.CopyAssets(config.Pages, config.Output))
 			vlog("-> %s", p.Path)
-			htmlc++
-			assetc += len(p.Assets)
 		}(page)
+		htmlc++
+		assetc += len(page.Assets)
 	}
+	log.Printf("generated %d html files, copying %d asset files...\n", htmlc, assetc)
 	wg.Wait()
-	log.Printf("generated %d html files, copied %d asset files\n", htmlc, assetc)
 
 	log.Println("pagr success")
 	return
