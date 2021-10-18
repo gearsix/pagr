@@ -110,7 +110,8 @@ func titleFromPath(path string) (title string) {
    return
 }
 
-var contentExts = [5]string{
+var contentExts = [6]string{
+	"",      // pre-formatted text
 	".txt",  // plain-text
 	".html", // HTML
 	".md",   // commonmark + extensions (linkify, auto-heading id, unsafe HTML)
@@ -293,6 +294,8 @@ func (p *Page) NewContentFromFile(fpath string) (err error) {
 	for _, lang := range contentExts {
 		if filepath.Ext(fpath) == lang {
 			switch lang {
+			case "":
+				body = "<pre>"+string(buf)+"</pre>"
 			case ".txt":
 				body = convertTextToHTML(bytes.NewReader(buf))
 			case ".md":
