@@ -18,7 +18,7 @@ import (
 	"sort"
 )
 
-const timefmt = "Mon, 02 Jan 2006"
+const timefmt = "2006-01-02"
 
 // Sitemap parses `pages` to determine the `.Nav` values for each element in `pages`
 // based on their `.Path` value. These values will be set in the returned Content
