@@ -34,6 +34,10 @@ func check(err error) {
 	}
 }
 
+func ignoreFile(filepath string) bool {
+	return strings.Contains(filepath, ".ignore")
+}
+
 func init() {
 	flag.StringVar(&cfg, "cfg", "", "path to pagr project configuration file")
 	flag.BoolVar(&verbose, "v", false, "print verbose logs")
@@ -42,8 +46,8 @@ func init() {
 func main() {
 	flag.Parse()
 	vlog("verbose on")
-	var err error
 
+	var err error
 	var config Config
 	if len(cfg) > 0 {
 		vlog("loading '%s'", cfg)
@@ -82,8 +86,8 @@ func main() {
 		htmlc++
 		assetc += len(page.Assets)
 	}
-	log.Printf("generated %d html files, copying %d asset files...\n", htmlc, assetc)
 	wg.Wait()
+	log.Printf("generated %d html files, copied %d asset files...\n", htmlc, assetc)
 
 	log.Println("pagr success")
 	return
@@ -117,11 +121,17 @@ func buildPage(cfg Config, p Page, t []suti.Template) error {
 
 func copyAssets(wg sync.WaitGroup, cfg Config) (n int) {
 	for _, a := range cfg.Assets {
-		err := filepath.Walk(a, func(path string, info fs.FileInfo, err error) error {
-			if err == nil && !info.IsDir() {
-				n++
+		err := filepath.Walk(a, func(src string, info fs.FileInfo, err error) error {
+			if err == nil && !info.IsDir() && !ignoreFile(src) {
 				wg.Add(1)
-				go CopyFile(path, filepath.Join(cfg.Output, strings.TrimPrefix(path, filepath.Clean(a))))
+				go func(src string) {
+					defer wg.Done()
+					a = filepath.Clean(a)
+					path := strings.TrimPrefix(src, a)
+					n++
+					CopyFile(src, filepath.Join(cfg.Output, path))
+					vlog("-> %s", path)
+				}(src)
 			}
 			return err
 		})

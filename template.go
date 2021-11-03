@@ -28,7 +28,7 @@ func LoadTemplateDir(dir string) (templates []suti.Template, err error) {
 	})
 
 	err = filepath.Walk(dir, func(path string, info fs.FileInfo, e error) error {
-		if e != nil || info.IsDir() || strings.Contains(path, ".ignore") {
+		if e != nil || info.IsDir() || ignoreFile(path) {
 			return e
 		}
 

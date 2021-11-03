@@ -146,7 +146,7 @@ func LoadPagesDir(dir string) (p []Page, e error) {
 		if err != nil {
 			return err
 		}
-		if strings.Contains(fpath, ".ignore") {
+		if ignoreFile(fpath) {
 			return nil
 		}
 
