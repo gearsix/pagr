@@ -17,19 +17,21 @@ const Version = "0.0.0"
 
 var cfg string
 var verbose bool
+var ilog = log.New(os.Stdout, "", 0)
+var elog = log.New(os.Stderr, "", 0)
 
-func vlog(fmt string, args ...interface{}) {
+func vlog (fmt string, args ...interface{}) {
 	if verbose {
-		log.Printf(fmt, args...)
+		ilog.Printf(fmt, args...)
 	}
 }
 
 func check(err error) {
 	if err != nil {
 		if verbose {
-			log.Panic(err.Error())
+			elog.Panic(err.Error())
 		} else {
-			log.Fatalf("ERROR! %s\n", err)
+			elog.Fatalf("ERROR! %s\n", err)
 		}
 	}
 }
@@ -40,7 +42,7 @@ func ignoreFile(filepath string) bool {
 
 func init() {
 	flag.StringVar(&cfg, "cfg", "", "path to pagr project configuration file")
-	flag.BoolVar(&verbose, "v", false, "print verbose logs")
+	flag.BoolVar(&verbose, "v", false, "print verbose ilog.")
 }
 
 func main() {
@@ -54,7 +56,7 @@ func main() {
 		config, err = NewConfigFromFile(cfg)
 		check(err)
 	} else {
-		log.Println("warning: no cfg passed, using defaults")
+		ilog.Println("no cfg passed, using defaults")
 		config = NewConfig()
 	}
 	vlog("loaded config: %s\n", config)
@@ -62,34 +64,30 @@ func main() {
 	var pages []Page
 	pages, err = LoadPagesDir(config.Pages)
 	check(err)
-	log.Printf("loaded %d content pages", len(pages))
+	ilog.Printf("loaded %d content pages", len(pages))
 
 	var templates []suti.Template
 	templates, err = LoadTemplateDir(config.Templates)
 	check(err)
-	log.Printf("loaded %d template files", len(templates))
+	ilog.Printf("loaded %d template files", len(templates))
 
+	ilog.Println("building project...")
 	htmlc := 0
 	var wg sync.WaitGroup
 	assetc := copyAssets(wg, config)
 	for _, page := range pages {
-		wg.Add(1)
-		go func (p Page) {
-			defer wg.Done()
-			if err := buildPage(config, p, templates); err != nil {
-				log.Printf("skipping %s: %s\n", p.Path, err)
-				return
-			}
-			check(p.CopyAssets(config.Pages, config.Output))
-			vlog("-> %s", p.Path)
-		}(page)
+		if err := buildPage(config, page, templates); err != nil {
+			ilog.Printf("skipping %s: %s\n", page.Path, err)
+			return
+		}
+		check(page.CopyAssets(config.Pages, config.Output))
+		vlog("-> %s", page.Path)
 		htmlc++
 		assetc += len(page.Assets)
 	}
-	wg.Wait()
-	log.Printf("generated %d html files, copied %d asset files...\n", htmlc, assetc)
+	ilog.Printf("generated %d html files, copied %d asset files\n", htmlc, assetc)
 
-	log.Println("pagr success")
+	ilog.Println("pagr success")
 	return
 }
 
@@ -123,15 +121,11 @@ func copyAssets(wg sync.WaitGroup, cfg Config) (n int) {
 	for _, a := range cfg.Assets {
 		err := filepath.Walk(a, func(src string, info fs.FileInfo, err error) error {
 			if err == nil && !info.IsDir() && !ignoreFile(src) {
-				wg.Add(1)
-				go func(src string) {
-					defer wg.Done()
-					a = filepath.Clean(a)
-					path := strings.TrimPrefix(src, a)
-					n++
-					CopyFile(src, filepath.Join(cfg.Output, path))
-					vlog("-> %s", path)
-				}(src)
+				a = filepath.Clean(a)
+				path := strings.TrimPrefix(src, a)
+				n++
+				CopyFile(src, filepath.Join(cfg.Output, path))
+				vlog("-> %s", path)
 			}
 			return err
 		})
