@@ -124,7 +124,7 @@ func copyAssets(wg sync.WaitGroup, cfg Config) (n int) {
 				a = filepath.Clean(a)
 				path := strings.TrimPrefix(src, a)
 				n++
-				CopyFile(src, filepath.Join(cfg.Output, path))
+				check(CopyFile(src, filepath.Join(cfg.Output, path)))
 				vlog("-> %s", path)
 			}
 			return err

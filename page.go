@@ -346,27 +346,6 @@ func (p *Page) CopyAssets(srcDir, outDir string) (err error) {
 	return
 }
 
-func CopyFile(src, dst string) (err error) {
-	if err = os.MkdirAll(filepath.Dir(dst), 0777); err != nil {
-		return err
-	}
-
-	var srcf, dstf *os.File
-	if srcf, err = os.Open(src); err != nil {
-		return err
-	}
-	defer srcf.Close()
-	if dstf, err = os.OpenFile(dst, os.O_RDWR|os.O_CREATE, 0644); err != nil {
-		return err
-	}
-	defer dstf.Close()
-
-	if _, err = io.Copy(dstf, srcf); err != nil {
-		return err
-	}
-	return dstf.Sync()
-}
-
 func (p *Page) Build(outDir string, t suti.Template) (out string, err error) {
 	var buf bytes.Buffer
 	if buf, err = t.Execute(p); err == nil {
