@@ -42,10 +42,6 @@ import (
 func CopyFile(src, dst string) (err error) {
 	var srcfi, dstfi os.FileInfo
 
-	if err = os.MkdirAll(filepath.Dir(dst), 0777); err != nil {
-		return err
-	}
-	
 	if srcfi, err = os.Stat(src); err != nil {
 		return err
 	} else if !srcfi.Mode().IsRegular() {
@@ -55,11 +51,15 @@ func CopyFile(src, dst string) (err error) {
 
 	if dstfi, err = os.Stat(dst); err != nil && !os.IsNotExist(err) {
 		return err
-	} else if !dstfi.Mode().IsRegular() {
+	} else if dstfi != nil && !dstfi.Mode().IsRegular() {
 		return fmt.Errorf("cannot copy to non-regular destination file %s (%q)",
 			dstfi.Name(), dstfi.Mode().String())
 	} else if os.SameFile(srcfi, dstfi) {
 		return nil
+	}
+
+	if err = os.MkdirAll(filepath.Dir(dst), 0777); err != nil {
+		return err
 	}
 
 	cSrc := C.CString(src)
