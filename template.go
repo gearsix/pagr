@@ -19,7 +19,8 @@ func LoadTemplateDir(dir string) (templates []suti.Template, err error) {
 	templatePaths := make(map[string][]string) // map[rootPath][]partialPaths...
 
 	err = filepath.Walk(dir, func(path string, info fs.FileInfo, e error) error {
-		if e != nil || info.IsDir() || strings.Contains(path, ".ignore") {
+		lang := strings.TrimPrefix(filepath.Ext(path), ".")
+		if e != nil || info.IsDir() || strings.Contains(path, ".ignore") || suti.IsSupportedTemplateLang(lang) == -1 {
 			return e
 		}
 
@@ -28,7 +29,8 @@ func LoadTemplateDir(dir string) (templates []suti.Template, err error) {
 	})
 
 	err = filepath.Walk(dir, func(path string, info fs.FileInfo, e error) error {
-		if e != nil || info.IsDir() || ignoreFile(path) {
+		lang := strings.TrimPrefix(filepath.Ext(path), ".")
+		if e != nil || info.IsDir() || ignoreFile(path) || suti.IsSupportedTemplateLang(lang) == -1 {
 			return e
 		}
 
