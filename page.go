@@ -32,46 +32,44 @@ func BuildSitemap(pages []Page) []Page {
 	}
 
 	for i, p := range pages {
-		go func(i int, p Page) {
-			p.Nav.Root = root
+		p.Nav.Root = root
 
-			pdepth := len(strings.Split(p.Path, "/")[1:])
-			if p.Path == "/" {
-				pdepth = 0
+		pdepth := len(strings.Split(p.Path, "/")[1:])
+		if p.Path == "/" {
+			pdepth = 0
+		}
+
+		if pdepth == 1 && p.Path != "/" {
+			p.Nav.Parent = root
+		}
+
+		for j, pp := range pages {
+			ppdepth := len(strings.Split(pp.Path, "/")[1:])
+			if pp.Path == "/" {
+				ppdepth = 0
 			}
 
-			if pdepth == 1 && p.Path != "/" {
-				p.Nav.Parent = root
+			p.Nav.All = append(p.Nav.All, &pages[j])
+			if p.Nav.Parent == nil && ppdepth == pdepth - 1 && strings.Contains(p.Path, pp.Path) {
+				p.Nav.Parent = &pages[j]
 			}
+			if ppdepth == pdepth + 1 && strings.Contains(pp.Path, p.Path) {
+				p.Nav.Children = append(p.Nav.Children, &pages[j])
+			}
+		}
 
+		var crumb string
+		for _, c := range strings.Split(p.Path, "/")[1:] {
+			crumb += "/" + c
 			for j, pp := range pages {
-				ppdepth := len(strings.Split(pp.Path, "/")[1:])
-				if pp.Path == "/" {
-					ppdepth = 0
-				}
-
-				p.Nav.All = append(p.Nav.All, &pages[j])
-				if p.Nav.Parent == nil && ppdepth == pdepth - 1 && strings.Contains(p.Path, pp.Path) {
-					p.Nav.Parent = &pages[j]
-				}
-				if ppdepth == pdepth + 1 && strings.Contains(pp.Path, p.Path) {
-					p.Nav.Children = append(p.Nav.Children, &pages[j])
+				if pp.Path == crumb {
+					p.Nav.Crumbs = append(p.Nav.Crumbs, &pages[j])
+					break
 				}
 			}
+		}
 
-			var crumb string
-			for _, c := range strings.Split(p.Path, "/")[1:] {
-				crumb += "/" + c
-				for j, pp := range pages {
-					if pp.Path == crumb {
-						p.Nav.Crumbs = append(p.Nav.Crumbs, &pages[j])
-						break
-					}
-				}
-			}
-
-			pages[i] = p
-		}(i, p)
+		pages[i] = p
 	}
 
 	return pages
