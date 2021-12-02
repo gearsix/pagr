@@ -58,6 +58,10 @@ func BuildSitemap(pages []Page) []Page {
 			}
 		}
 
+		sort.SliceStable(p.Nav.Children, func(i, j int) bool {
+			return sort.StringsAreSorted([]string{p.Nav.Children[i].Path, p.Nav.Children[j].Path})
+		})
+
 		var crumb string
 		for _, c := range strings.Split(p.Path, "/")[1:] {
 			crumb += "/" + c
