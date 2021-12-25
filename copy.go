@@ -9,21 +9,26 @@ int copyf(const char *src, const char *dst)
 	int ret = EXIT_FAILURE;
 	
 	FILE *srcf, *dstf;
-	if ((!(srcf = fopen(src, "r"))) ||
-		(!(dstf = fopen(dst, "w"))))
+	if ((!(srcf = fopen(src, "rb"))) ||
+		(!(dstf = fopen(dst, "wb"))))
 		goto ABORT;
+		
+	fseek(srcf, 0, SEEK_END);
+	size_t siz = ftell(srcf);
+	rewind(srcf);
 
-	char buf[BUFSIZ];
-	int n;
+	char buf[4096]; // 4kb blocks
+	size_t r, w, total = 0;
 	do {
-		n = fread(buf, sizeof(char), BUFSIZ, srcf);
-		if (ferror(srcf)) perror("fread failure");
+		r = fread(buf, sizeof(char), sizeof(buf), srcf);
+		if (ferror(srcf)) goto ABORT;
 		else {
-			fwrite(buf, sizeof(char), n, dstf);
-			if (ferror(dstf)) perror("fwrite failure");
+			w = fwrite(buf, sizeof(char), r, dstf);
+			if (ferror(dstf)) goto ABORT;
+			total += w;
 		}
-	} while (!feof(srcf) && !ferror(srcf) && !ferror(dstf));
-	ret = EXIT_SUCCESS;
+	} while (!feof(srcf));
+	if (total == siz) ret = EXIT_SUCCESS;
 	
 ABORT:
 	if (srcf) fclose(srcf);
