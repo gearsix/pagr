@@ -32,4 +32,3 @@ func TestCopyFile(test *testing.T) {
 		test.Fatalf("copied data (%s) does not match source (%s)", buf, data)
 	}
 }
-

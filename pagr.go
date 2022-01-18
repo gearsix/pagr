@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"io/fs"
-	"os"
-	"strings"
-	"sync"
-	"path/filepath"
 	"log"
 	"notabug.org/gearsix/suti"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
 )
 
 const Name = "pagr"
@@ -20,7 +20,7 @@ var verbose bool
 var ilog = log.New(os.Stdout, "", 0)
 var elog = log.New(os.Stderr, "", 0)
 
-func vlog (fmt string, args ...interface{}) {
+func vlog(fmt string, args ...interface{}) {
 	if verbose {
 		ilog.Printf(fmt, args...)
 	}

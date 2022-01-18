@@ -1,10 +1,10 @@
 package main
 
 import (
-	"path/filepath"
 	"io/fs"
-	"strings"
 	"notabug.org/gearsix/suti"
+	"path/filepath"
+	"strings"
 )
 
 // DefaultTemplateName provides the default name for the template used
@@ -34,15 +34,14 @@ func LoadTemplateDir(dir string) (templates []suti.Template, err error) {
 			return e
 		}
 
-		for t, _ := range templatePaths {
+		for t := range templatePaths {
 			if strings.Contains(path, filepath.Dir(t)) &&
 				filepath.Ext(t) == filepath.Ext(path) {
-					templatePaths[t] = append(templatePaths[t], path)
-				}
+				templatePaths[t] = append(templatePaths[t], path)
+			}
 		}
 		return e
 	})
-
 
 	if err == nil {
 		var t suti.Template

@@ -10,12 +10,12 @@ import (
 	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 	"io"
 	"io/fs"
-	"time"
 	"notabug.org/gearsix/suti"
 	"os"
 	"path/filepath"
-	"strings"
 	"sort"
+	"strings"
+	"time"
 )
 
 const timefmt = "2006-01-02"
@@ -50,10 +50,10 @@ func BuildSitemap(pages []Page) []Page {
 			}
 
 			p.Nav.All = append(p.Nav.All, &pages[j])
-			if p.Nav.Parent == nil && ppdepth == pdepth - 1 && strings.Contains(p.Path, pp.Path) {
+			if p.Nav.Parent == nil && ppdepth == pdepth-1 && strings.Contains(p.Path, pp.Path) {
 				p.Nav.Parent = &pages[j]
 			}
-			if ppdepth == pdepth + 1 && strings.Contains(pp.Path, p.Path) {
+			if ppdepth == pdepth+1 && strings.Contains(pp.Path, p.Path) {
 				p.Nav.Children = append(p.Nav.Children, &pages[j])
 			}
 		}
@@ -103,13 +103,13 @@ func lastFileMod(fpath string) time.Time {
 }
 
 func titleFromPath(path string) (title string) {
-	if title = filepath.Base(path); title ==  "/" {
-	   title = "Home"
-   }
-   title = strings.TrimSuffix(title, filepath.Ext(title))
-   title = strings.ReplaceAll(title, "-", " ")
-   title = strings.Title(title)
-   return
+	if title = filepath.Base(path); title == "/" {
+		title = "Home"
+	}
+	title = strings.TrimSuffix(title, filepath.Ext(title))
+	title = strings.ReplaceAll(title, "-", " ")
+	title = strings.Title(title)
+	return
 }
 
 var contentExts = [6]string{
@@ -300,7 +300,7 @@ func (p *Page) NewContentFromFile(fpath string) (err error) {
 		if filepath.Ext(fpath) == lang {
 			switch lang {
 			case "":
-				body = "<pre>"+string(buf)+"</pre>"
+				body = "<pre>" + string(buf) + "</pre>"
 			case ".txt":
 				body = convertTextToHTML(bytes.NewReader(buf))
 			case ".md":

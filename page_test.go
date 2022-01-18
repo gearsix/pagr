@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
-	"os"
-	"time"
 	"notabug.org/gearsix/suti"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 )
 
 // helper functions
@@ -138,11 +138,11 @@ func TestBuildSitemap(test *testing.T) {
 
 	var err error
 	/*
-	writef := func(path, data string) {
-		if err == nil {
-			err = os.WriteFile(path, []byte(data), 0644)
+		writef := func(path, data string) {
+			if err == nil {
+				err = os.WriteFile(path, []byte(data), 0644)
+			}
 		}
-	}
 	*/
 	tdir := test.TempDir()
 	// TODO write files to pages dir
@@ -241,11 +241,11 @@ func TestNewContentFromFile(test *testing.T) {
 	test.Parallel()
 
 	var err error
-	contents := map[string]string {
-		"txt": `test`,
-		"md": "**test**\ntest",
-		"gfm": "**test**\ntest",
-		"cm": "**test**",
+	contents := map[string]string{
+		"txt":  `test`,
+		"md":   "**test**\ntest",
+		"gfm":  "**test**\ntest",
+		"cm":   "**test**",
 		"html": `<b>test</b>`,
 	}
 
@@ -275,7 +275,7 @@ func TestCopyAssets(test *testing.T) {
 	var err error
 
 	srcDir := test.TempDir()
-	src := []string{"1","2","3","4"}
+	src := []string{"1", "2", "3", "4"}
 
 	for _, fname := range src {
 		p.Assets = append(p.Assets, fname)
@@ -290,7 +290,7 @@ func TestCopyAssets(test *testing.T) {
 		test.Fatal("CopyAssets failed", err)
 	}
 	for _, fname := range src {
-		if _, err := os.Stat(dstDir+"/"+fname); err != nil {
+		if _, err := os.Stat(dstDir + "/" + fname); err != nil {
 			test.Fatal("missing file", dstDir+"/"+fname)
 		}
 	}
@@ -320,4 +320,3 @@ func TestBuild(test *testing.T) {
 		test.Fatalf("invalid result parsed: '%s', expected: 'Test p'", string(fbuf))
 	}
 }
-

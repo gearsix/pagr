@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -21,7 +21,7 @@ func TestLoadTemplateDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(tmpls) != len(templates) * 2 { // * 2 for partials
+	if len(tmpls) != len(templates)*2 { // * 2 for partials
 		t.Fatalf("number of returned templates is %d (should be %d)",
 			len(tmpls), len(templates))
 	}
@@ -30,7 +30,7 @@ func TestLoadTemplateDir(t *testing.T) {
 var templates = map[string]string{ // [ext]template
 	"tmpl": "{{.Contents}}",
 	"hmpl": "{{.Contents}}",
-	"mst": "{{Contents}}",
+	"mst":  "{{Contents}}",
 }
 
 func createProjectTemplates(dir string) error {

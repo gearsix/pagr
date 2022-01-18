@@ -7,12 +7,12 @@ package main
 int copyf(const char *src, const char *dst)
 {
 	int ret = EXIT_FAILURE;
-	
+
 	FILE *srcf, *dstf;
 	if ((!(srcf = fopen(src, "rb"))) ||
 		(!(dstf = fopen(dst, "wb"))))
 		goto ABORT;
-		
+
 	fseek(srcf, 0, SEEK_END);
 	size_t siz = ftell(srcf);
 	rewind(srcf);
@@ -29,7 +29,7 @@ int copyf(const char *src, const char *dst)
 		}
 	} while (!feof(srcf));
 	if (total == siz) ret = EXIT_SUCCESS;
-	
+
 ABORT:
 	if (srcf) fclose(srcf);
 	if (dstf) fclose(dstf);
@@ -39,8 +39,8 @@ ABORT:
 import "C"
 import (
 	"fmt"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"unsafe"
 )
 
