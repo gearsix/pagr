@@ -103,7 +103,7 @@ func lastFileMod(fpath string) time.Time {
 }
 
 func titleFromPath(path string) (title string) {
-   if title = filepath.Base(path); title == "/" {
+	if title = filepath.Base(path); title ==  "/" {
 	   title = "Home"
    }
    title = strings.TrimSuffix(title, filepath.Ext(title))
@@ -139,7 +139,7 @@ func LoadPagesDir(dir string) (p []Page, e error) {
 	if _, e = os.Stat(dir); e != nil {
 		return
 	}
-	dir = filepath.Clean(strings.TrimSuffix(dir, "/"))
+	dir = filepath.Clean(dir)
 
 	pages := make(map[string]Page)
 	dmetas := make(map[string]Meta)
@@ -221,6 +221,8 @@ func pagePath(root, path string) string {
 	path = strings.TrimPrefix(path, root)
 	if len(path) == 0 {
 		path = "/"
+	} else {
+		path = filepath.ToSlash(path)
 	}
 	return path
 }

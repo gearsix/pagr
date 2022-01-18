@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"os"
 	"testing"
 )
@@ -26,16 +27,16 @@ func TestNewConfigFromFile(test *testing.T) {
 	}
 
 	if cfg, err := NewConfigFromFile(cfgp); err == nil {
-		if cfg.Pages != tdir+"/p" {
+		if cfg.Pages != filepath.Join(tdir, "p") {
 			test.Fatalf("invalid Pages path: '%s'", cfg.Pages)
 		}
-		if cfg.Templates != tdir+"/t" {
+		if cfg.Templates != filepath.Join(tdir, "t") {
 			test.Fatalf("invalid Templates path: '%s'", cfg.Templates)
 		}
-		if cfg.Assets[0] != tdir+"/a" {
+		if cfg.Assets[0] != filepath.Join(tdir, "a") {
 			test.Fatalf("invalid Assets path: '%s'", cfg.Assets)
 		}
-		if cfg.Output != tdir+"/o" {
+		if cfg.Output != filepath.Join(tdir, "o") {
 			test.Fatalf("invalid Output path: '%s'", cfg.Output)
 		}
 	} else {
