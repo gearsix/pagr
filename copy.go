@@ -70,14 +70,17 @@ func CopyFile(src, dst string) (err error) {
 	if err = os.MkdirAll(filepath.Dir(dst), 0777); err != nil {
 		return err
 	}
-
-	cSrc := C.CString(src)
-	cDst := C.CString(dst)
-	if uint32(C.copyf(cSrc, cDst)) != 0 {
-		err = fmt.Errorf("copyf failed ('%s' -> '%s')", src, dst)
+	
+	// only copy if files have different name/size
+	if (srcfi.Name == dstfi.Name && srcfi.size == dstfi.Size) {
+		cSrc := C.CString(src)
+		cDst := C.CString(dst)
+		if uint32(C.copyf(cSrc, cDst)) != 0 {
+			err = fmt.Errorf("copyf failed ('%s' -> '%s')", src, dst)
+		}
+		C.free(unsafe.Pointer(cSrc))
+		C.free(unsafe.Pointer(cDst))
 	}
-	C.free(unsafe.Pointer(cSrc))
-	C.free(unsafe.Pointer(cDst))
 
 	return
 }
