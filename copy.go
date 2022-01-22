@@ -4,6 +4,10 @@ package main
 #include <stdio.h>
 #include <stdlib.h>
 
+// copyf copies data from file at `src` to the file at `dst`
+// in 4kb chunks`.
+// any existing file @ `dst` will be overwritten.
+// returns EXIT_SUCCESS or EXIT_FAILURE.
 int copyf(const char *src, const char *dst)
 {
 	int ret = EXIT_FAILURE;
@@ -17,7 +21,7 @@ int copyf(const char *src, const char *dst)
 	size_t siz = ftell(srcf);
 	rewind(srcf);
 
-	char buf[4096]; // 4kb blocks
+	char buf[4096]; // 4kb chunks
 	size_t r, w, total = 0;
 	do {
 		r = fread(buf, sizeof(char), sizeof(buf), srcf);
