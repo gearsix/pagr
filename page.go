@@ -20,65 +20,6 @@ import (
 
 const timefmt = "2006-01-02"
 
-// Sitemap parses `pages` to determine the `.Nav` values for each element in `pages`
-// based on their `.Path` value. These values will be set in the returned Content
-func BuildSitemap(pages []Page) []Page {
-	var root *Page
-	for i, p := range pages {
-		if p.Path == "/" {
-			root = &pages[i]
-			break
-		}
-	}
-
-	for i, p := range pages {
-		p.Nav.Root = root
-
-		pdepth := len(strings.Split(p.Path, "/")[1:])
-		if p.Path == "/" {
-			pdepth = 0
-		}
-
-		if pdepth == 1 && p.Path != "/" {
-			p.Nav.Parent = root
-		}
-
-		for j, pp := range pages {
-			ppdepth := len(strings.Split(pp.Path, "/")[1:])
-			if pp.Path == "/" {
-				ppdepth = 0
-			}
-
-			p.Nav.All = append(p.Nav.All, &pages[j])
-			if p.Nav.Parent == nil && ppdepth == pdepth-1 && strings.Contains(p.Path, pp.Path) {
-				p.Nav.Parent = &pages[j]
-			}
-			if ppdepth == pdepth+1 && strings.Contains(pp.Path, p.Path) {
-				p.Nav.Children = append(p.Nav.Children, &pages[j])
-			}
-		}
-
-		sort.SliceStable(p.Nav.Children, func(i, j int) bool {
-			return sort.StringsAreSorted([]string{p.Nav.Children[i].Path, p.Nav.Children[j].Path})
-		})
-
-		var crumb string
-		for _, c := range strings.Split(p.Path, "/")[1:] {
-			crumb += "/" + c
-			for j, pp := range pages {
-				if pp.Path == crumb {
-					p.Nav.Crumbs = append(p.Nav.Crumbs, &pages[j])
-					break
-				}
-			}
-		}
-
-		pages[i] = p
-	}
-
-	return pages
-}
-
 func lastFileMod(fpath string) time.Time {
 	t := time.Now() // default/error ret
 	if fd, e := os.Stat(fpath); e != nil {
