@@ -6,6 +6,7 @@ import (
 	"time"
 	"path/filepath"
 	"testing"
+	"strings"
 )
 
 var templates = map[string]string{ // [ext]template
@@ -127,6 +128,64 @@ func createTestContents(dir string) (err error) {
 	return
 }
 
+func validateTestPagesNav(t *testing.T, pages []Page) {
+	for _,  p := range pages {
+		var allUnique []string
+		for _, navp := range p.Nav.All {
+			for _, a := range allUnique {
+				if a == navp.Path {
+					t.Errorf("'%s' has .Nav.All items with duplicate .Path values (%s)",
+						p.Path, a)
+				}
+			}
+			allUnique = append(allUnique, navp.Path)
+		}
+		if (len(p.Nav.All) != len(pages)) {
+			t.Errorf("'%s' has %d in .Nav.All (should be %d)",
+				p.Path, len(p.Nav.All), len(pages))
+		}
+		
+		foundAll := 0
+		for _, navp := range p.Nav.All {
+			for _, pp := range pages {
+				if navp.Path == pp.Path {
+					foundAll++
+					break
+				}
+			}
+		}
+		if foundAll != len(p.Nav.All) {
+			t.Errorf("found %d/%d pages in .Nav.All for '%s'",
+				foundAll, len(p.Nav.All), p.Path)
+		}
+		
+		foundRoot := false
+		foundParent := false
+		for _, pp := range pages {
+			if !foundRoot && p.Nav.Root.Path == pp.Path {
+				foundRoot = true
+			}
+			if !foundParent && p.Nav.Parent == nil || p.Nav.Parent.Path == pp.Path {
+				foundParent = true
+			}
+			if foundRoot && foundParent {
+				break
+			}
+		}
+		if !foundRoot {
+			t.Errorf("could not find .Root '%s' for '%s'",
+				p.Nav.Root.Path, p.Path)
+		}
+		if !foundParent {
+			t.Errorf("could not find .Parent '%s' for '%s'",
+				p.Nav.Parent.Path, p.Path)
+		}
+		
+		// TODO test .Nav.Children, figure out how many should exist
+		// TODO test .Nav.Crumbs, figure out how many should exist
+	}
+}
+
 func validateTestPages(t *testing.T, pages []Page, e error) {
 	if len(pages) != len(contents) {
 		t.Fatalf("invalid number of pages returned (%d should be %d)",
@@ -142,7 +201,7 @@ func validateTestPages(t *testing.T, pages []Page, e error) {
 		if len(p.Path) == 0 {
 			t.Error("empty Path for page:", p)
 		}
-		// TODO test p.Nav here
+		validateTestPagesNav(t, pages)
 		if _, ok := p.Meta["page"]; !ok || len(p.Meta) == 0 {
 			t.Errorf("missing page Meta key for page: '%s'", p.Path)
 		}
