@@ -71,8 +71,8 @@ func CopyFile(src, dst string) (err error) {
 		return err
 	}
 	
-	// only copy if files have different name/size
-	if (srcfi.Name == dstfi.Name && srcfi.size == dstfi.Size) {
+	// only copy if dst doesnt exist or has different name/size
+	if (dstfi == nil || srcfi.Name() == dstfi.Name() && srcfi.Size() == dstfi.Size()) {
 		cSrc := C.CString(src)
 		cDst := C.CString(dst)
 		if uint32(C.copyf(cSrc, cDst)) != 0 {
