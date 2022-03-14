@@ -1,8 +1,8 @@
 package main
 
 import (
-	"strings"
 	"sort"
+	"strings"
 )
 
 func findRootPage(pages []Page) (root *Page) {
@@ -45,21 +45,21 @@ func BuildCrumbs(p Page, pages []Page) (crumbs []*Page) {
 // based on their `.Path` value. These values will be set in the returned Content
 func BuildSitemap(pages []Page) []Page {
 	root := findRootPage(pages)
-	
+
 	for i, p := range pages {
 		pdepth := readPageDepth(p)
-		
+
 		p.Nav.Root = root
-		
+
 		if pdepth == 1 && p.Path != "/" {
 			p.Nav.Parent = root
 		}
-		
+
 		for j, pp := range pages {
 			ppdepth := readPageDepth(pp)
-		
+
 			p.Nav.All = append(p.Nav.All, &pages[j])
-			
+
 			if p.Nav.Parent == nil && ppdepth == pdepth-1 && strings.Contains(p.Path, pp.Path) {
 				p.Nav.Parent = &pages[j]
 			}
@@ -67,15 +67,15 @@ func BuildSitemap(pages []Page) []Page {
 				p.Nav.Children = append(p.Nav.Children, &pages[j])
 			}
 		}
-		
+
 		sort.SliceStable(p.Nav.Children, func(i, j int) bool {
 			return sort.StringsAreSorted([]string{p.Nav.Children[j].Path, p.Nav.Children[j].Path})
 		})
-		
+
 		p.Nav.Crumbs = BuildCrumbs(p, pages)
-		
+
 		pages[i] = p
 	}
-	
+
 	return pages
 }

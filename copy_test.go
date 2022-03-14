@@ -13,7 +13,7 @@ func TestCopyFile(test *testing.T) {
 	src := filepath.Join(tdir, "/src")
 	srcData := []byte("data")
 	dst := filepath.Join(tdir, "/dst")
-	
+
 	if err := os.WriteFile(src, srcData, 0666); err != nil {
 		test.Error("setup failed, could not write", tdir+"/src")
 	}
@@ -24,7 +24,7 @@ func TestCopyFile(test *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		test.Fatalf("could not stat '%s'", dst)
 	}
-	
+
 	if buf, err := os.ReadFile(dst); err != nil {
 		test.Errorf("could not read '%s'", dst)
 	} else if len(buf) < len(srcData) {

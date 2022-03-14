@@ -70,9 +70,9 @@ func CopyFile(src, dst string) (err error) {
 	if err = os.MkdirAll(filepath.Dir(dst), 0777); err != nil {
 		return err
 	}
-	
+
 	// only copy if dst doesnt exist or has different name/size
-	if (dstfi == nil || srcfi.Name() == dstfi.Name() && srcfi.Size() == dstfi.Size()) {
+	if dstfi == nil || srcfi.Name() == dstfi.Name() && srcfi.Size() == dstfi.Size() {
 		cSrc := C.CString(src)
 		cDst := C.CString(dst)
 		if uint32(C.copyf(cSrc, cDst)) != 0 {

@@ -9,7 +9,7 @@ func TestBuildCrumbs(test *testing.T) {
 
 func TestBuildSitemap(test *testing.T) {
 	var err error
-	
+
 	tdir := test.TempDir()
 	if err = createTestContents(tdir); err != nil {
 		test.Errorf("failed to create test content: %s", err)
@@ -19,7 +19,7 @@ func TestBuildSitemap(test *testing.T) {
 	if p, err = LoadPagesDir(tdir); err != nil {
 		test.Errorf("LoadPagesDir failed: %s", err)
 	}
-	
+
 	p = BuildSitemap(p)
 	// TODO validate p
 }

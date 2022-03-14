@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 	"path/filepath"
-	"testing"
 	"strings"
+	"testing"
+	"time"
 )
 
 var templates = map[string]string{ // [ext]template
@@ -73,19 +73,20 @@ p2
 	pre2
 
 p3`
-const contentsCm =`p1
+const contentsCm = `p1
 p2
 
 	pre1
 	pre2
 
 p3`
+
 var contents = map[string]string{
-	".txt": contentsTxt,
+	".txt":  contentsTxt,
 	".html": contentsHtml,
-	".md": contentsMd,
-	".gfm": contentsGfm,
-	".cm": contentsCm,
+	".md":   contentsMd,
+	".gfm":  contentsGfm,
+	".cm":   contentsCm,
 }
 
 var asset = []byte{ // 5x5 black png image
@@ -129,7 +130,7 @@ func createTestContents(dir string) (err error) {
 }
 
 func validateTestPagesNav(t *testing.T, pages []Page) {
-	for _,  p := range pages {
+	for _, p := range pages {
 		var allUnique []string
 		for _, navp := range p.Nav.All {
 			for _, a := range allUnique {
@@ -140,11 +141,11 @@ func validateTestPagesNav(t *testing.T, pages []Page) {
 			}
 			allUnique = append(allUnique, navp.Path)
 		}
-		if (len(p.Nav.All) != len(pages)) {
+		if len(p.Nav.All) != len(pages) {
 			t.Errorf("'%s' has %d in .Nav.All (should be %d)",
 				p.Path, len(p.Nav.All), len(pages))
 		}
-		
+
 		foundAll := 0
 		for _, navp := range p.Nav.All {
 			for _, pp := range pages {
@@ -158,7 +159,7 @@ func validateTestPagesNav(t *testing.T, pages []Page) {
 			t.Errorf("found %d/%d pages in .Nav.All for '%s'",
 				foundAll, len(p.Nav.All), p.Path)
 		}
-		
+
 		foundRoot := false
 		foundParent := false
 		for _, pp := range pages {
@@ -180,7 +181,7 @@ func validateTestPagesNav(t *testing.T, pages []Page) {
 			t.Errorf("could not find .Parent '%s' for '%s'",
 				p.Nav.Parent.Path, p.Path)
 		}
-		
+
 		// TODO test .Nav.Children, figure out how many should exist
 		// TODO test .Nav.Crumbs, figure out how many should exist
 	}
