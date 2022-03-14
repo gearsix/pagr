@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 )
@@ -163,11 +162,19 @@ func validateTestPagesNav(t *testing.T, pages []Page) {
 		foundRoot := false
 		foundParent := false
 		for _, pp := range pages {
-			if !foundRoot && p.Nav.Root.Path == pp.Path {
-				foundRoot = true
+			if !foundRoot {
+				if p.Nav.Root == nil {
+					foundRoot = true
+				} else if p.Nav.Root.Path == pp.Path {
+					foundRoot = true
+				}
 			}
-			if !foundParent && p.Nav.Parent == nil || p.Nav.Parent.Path == pp.Path {
-				foundParent = true
+			if !foundParent {
+				if p.Nav.Parent == nil {
+					foundParent = true
+				} else if p.Nav.Parent.Path == pp.Path {
+					foundParent = true
+				}
 			}
 			if foundRoot && foundParent {
 				break
