@@ -19,7 +19,7 @@ func TestNewConfigFromFile(test *testing.T) {
 		test.Skipf("failed to create config file: '%s'", cfgp)
 	} else {
 		f.WriteString(`
-			Pages = "./p"
+			Contents = "./p"
 			Templates = "./t"
 			Assets = ["./a"]
 			Output = "./o"`)
@@ -27,8 +27,8 @@ func TestNewConfigFromFile(test *testing.T) {
 	}
 
 	if cfg, err := NewConfigFromFile(cfgp); err == nil {
-		if cfg.Pages != filepath.Join(tdir, "p") {
-			test.Fatalf("invalid Pages path: '%s'", cfg.Pages)
+		if cfg.Contents != filepath.Join(tdir, "p") {
+			test.Fatalf("invalid Contents path: '%s'", cfg.Contents)
 		}
 		if cfg.Templates != filepath.Join(tdir, "t") {
 			test.Fatalf("invalid Templates path: '%s'", cfg.Templates)

@@ -62,7 +62,7 @@ func main() {
 	vlog("loaded config: %s\n", config)
 
 	var pages []Page
-	pages, err = LoadContentsDir(config.Pages)
+	pages, err = LoadContentsDir(config.Contents)
 	check(err)
 	ilog.Printf("loaded %d content pages", len(pages))
 
@@ -80,7 +80,7 @@ func main() {
 			ilog.Printf("skipping %s: %s\n", page.Path, err)
 			return
 		}
-		check(page.CopyAssets(config.Pages, config.Output))
+		check(page.CopyAssets(config.Contents, config.Output))
 		vlog("-> %s", page.Path)
 		htmlc++
 		assetc += len(page.Assets)
@@ -113,7 +113,7 @@ func buildPage(cfg Config, p Page, t []suti.Template) error {
 
 	_, err := p.Build(cfg.Output, *tmpl)
 	check(err)
-	check(p.CopyAssets(cfg.Pages, cfg.Output))
+	check(p.CopyAssets(cfg.Contents, cfg.Output))
 	return err
 }
 
