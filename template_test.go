@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -13,7 +10,7 @@ func TestLoadTemplateDir(t *testing.T) {
 	tdir := t.TempDir()
 
 	var err error
-	if err = createProjectTemplates(tdir); err != nil {
+	if err = createTestTemplates(tdir); err != nil {
 		t.Errorf("failed to create test templates: %s", err)
 	}
 
@@ -25,37 +22,4 @@ func TestLoadTemplateDir(t *testing.T) {
 		t.Fatalf("number of returned templates is %d (should be %d)",
 			len(tmpls), len(templates))
 	}
-}
-
-var templates = map[string]string{ // [ext]template
-	"tmpl": "{{.Contents}}",
-	"hmpl": "{{.Contents}}",
-	"mst":  "{{Contents}}",
-}
-
-func createProjectTemplates(dir string) error {
-	var err error
-	writef := func(path, data string) {
-		if err == nil {
-			err = os.WriteFile(path, []byte(data), 0644)
-		}
-	}
-
-	for ext, data := range templates {
-		writef(fmt.Sprintf("%s/root.%s", dir, ext), data)
-		writef(fmt.Sprintf("%s/root.ignore.%s", dir, ext), data)
-		writef(fmt.Sprintf("%s/root.%s.ignore", dir, ext), data)
-
-		pdir := filepath.Join(dir, ext)
-		err = os.Mkdir(pdir, 0755)
-		writef(fmt.Sprintf("%s/partial.%s", pdir, ext), data)
-		writef(fmt.Sprintf("%s/partial.ignore.%s", pdir, ext), data)
-		writef(fmt.Sprintf("%s/partial.%s.ignore", pdir, ext), data)
-
-		if err != nil {
-			break
-		}
-	}
-
-	return err
 }
