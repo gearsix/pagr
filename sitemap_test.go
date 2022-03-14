@@ -5,6 +5,20 @@ import (
 )
 
 func TestBuildCrumbs(test *testing.T) {
+	var err error
+
+	tdir := test.TempDir()
+	if err = createTestContents(tdir); err != nil {
+		test.Errorf("failed to create test content: %s", err)
+	}
+
+	// TODO fix laziness below, just dups TestLoadContentsDir
+	var p []Page
+	if p, err = LoadContentsDir(tdir); err != nil {
+		test.Errorf("LoadContentsDir failed: %s", err)
+	}
+	
+	validateTestPagesNav(test, p)
 }
 
 func TestBuildSitemap(test *testing.T) {
@@ -15,11 +29,11 @@ func TestBuildSitemap(test *testing.T) {
 		test.Errorf("failed to create test content: %s", err)
 	}
 
+	// TODO fix laziness below, just dups TestLoadContentsDir
 	var p []Page
 	if p, err = LoadContentsDir(tdir); err != nil {
-		test.Errorf("LoadPagesDir failed: %s", err)
+		test.Errorf("LoadContentsDir failed: %s", err)
 	}
-
-	p = BuildSitemap(p)
-	// TODO validate p
+	
+	validateTestPagesNav(test, p)
 }
