@@ -133,28 +133,6 @@ func createProjectContents(dir string) (err error) {
 	return
 }
 
-func TestBuildSitemap(test *testing.T) {
-	test.Parallel()
-
-	var err error
-	/*
-		writef := func(path, data string) {
-			if err == nil {
-				err = os.WriteFile(path, []byte(data), 0644)
-			}
-		}
-	*/
-	tdir := test.TempDir()
-	// TODO write files to pages dir
-
-	var p []Page
-	if p, err = LoadPagesDir(tdir); err != nil {
-		test.Errorf("LoadPagesDir failed: %s", err)
-	}
-	p = BuildSitemap(p)
-	// TODO validate p
-}
-
 func TestLoadPagesDir(test *testing.T) {
 	var err error
 	tdir := test.TempDir()
@@ -272,21 +250,21 @@ func TestCopyAssets(test *testing.T) {
 	test.Parallel()
 
 	var p Page
-	var err error
-
-	srcDir := test.TempDir()
 	src := []string{"1", "2", "3", "4"}
 
+	srcDir := test.TempDir()
 	for _, fname := range src {
 		p.Assets = append(p.Assets, fname)
 		path := filepath.Join(srcDir, fname)
-		if _, err = os.Create(path); err != nil {
+		if f, err := os.Create(path); err != nil {
 			test.Fatalf("failed to create source file '%s'", path)
+		} else {
+			f.Close()
 		}
 	}
 
 	dstDir := test.TempDir()
-	if err = p.CopyAssets(srcDir, dstDir); err != nil {
+	if err := p.CopyAssets(srcDir, dstDir); err != nil {
 		test.Fatal("CopyAssets failed", err)
 	}
 	for _, fname := range src {
