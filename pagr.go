@@ -62,7 +62,7 @@ func main() {
 	vlog("loaded config: %s\n", config)
 
 	var pages []Page
-	pages, err = LoadPagesDir(config.Pages)
+	pages, err = LoadContentsDir(config.Pages)
 	check(err)
 	ilog.Printf("loaded %d content pages", len(pages))
 

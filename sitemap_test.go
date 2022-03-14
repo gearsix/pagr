@@ -16,7 +16,7 @@ func TestBuildSitemap(test *testing.T) {
 	}
 
 	var p []Page
-	if p, err = LoadPagesDir(tdir); err != nil {
+	if p, err = LoadContentsDir(tdir); err != nil {
 		test.Errorf("LoadPagesDir failed: %s", err)
 	}
 
