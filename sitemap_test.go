@@ -17,7 +17,7 @@ func TestBuildCrumbs(test *testing.T) {
 	if p, err = LoadContentsDir(tdir); err != nil {
 		test.Errorf("LoadContentsDir failed: %s", err)
 	}
-	
+
 	validateTestPagesNav(test, p)
 }
 
@@ -34,6 +34,6 @@ func TestBuildSitemap(test *testing.T) {
 	if p, err = LoadContentsDir(tdir); err != nil {
 		test.Errorf("LoadContentsDir failed: %s", err)
 	}
-	
+
 	validateTestPagesNav(test, p)
 }

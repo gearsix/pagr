@@ -2,33 +2,32 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"io/fs"
 	"log"
 	"notabug.org/gearsix/suti"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 const Name = "pagr"
 const Version = "0.0.0"
 
-var cfg string
-var verbose bool
+var config Config
+var flagConfig string
+var flagVerbose bool
+
 var ilog = log.New(os.Stdout, "", 0)
 var elog = log.New(os.Stderr, "", 0)
 
 func vlog(fmt string, args ...interface{}) {
-	if verbose {
+	if flagVerbose {
 		ilog.Printf(fmt, args...)
 	}
 }
 
 func check(err error) {
 	if err != nil {
-		if verbose {
+		if flagVerbose {
 			elog.Panic(err.Error())
 		} else {
 			elog.Fatalf("ERROR! %s\n", err)
@@ -41,97 +40,96 @@ func ignoreFile(filepath string) bool {
 }
 
 func init() {
-	flag.StringVar(&cfg, "cfg", "", "path to pagr project configuration file")
-	flag.BoolVar(&verbose, "v", false, "print verbose ilog.")
+	flag.BoolVar(&flagVerbose, "v", false, "print verbose ilog.")
+	flag.StringVar(&flagConfig, "cfg", "", "path to pagr project configuration file")
 }
 
 func main() {
 	flag.Parse()
 	vlog("verbose on")
-
-	var err error
-	var config Config
-	if len(cfg) > 0 {
-		vlog("loading '%s'", cfg)
-		config, err = NewConfigFromFile(cfg)
-		check(err)
-	} else {
-		ilog.Println("no cfg passed, using defaults")
-		config = NewConfig()
-	}
+	config = loadConfigFile()
 	vlog("loaded config: %s\n", config)
 
-	var pages []Page
-	pages, err = LoadContentsDir(config.Contents)
+	var err error
+	var content []Page
+	content, err = LoadContentsDir(config.Contents)
 	check(err)
-	ilog.Printf("loaded %d content pages", len(pages))
+	ilog.Printf("loaded %d content pages", len(content))
 
 	var templates []suti.Template
 	templates, err = LoadTemplateDir(config.Templates)
 	check(err)
 	ilog.Printf("loaded %d template files", len(templates))
 
-	ilog.Println("building project...")
-	htmlc := 0
-	var wg sync.WaitGroup
-	assetc := copyAssets(wg, config)
-	for _, page := range pages {
-		if err := buildPage(config, page, templates); err != nil {
-			ilog.Printf("skipping %s: %s\n", page.Path, err)
-			return
-		}
-		check(page.CopyAssets(config.Contents, config.Output))
-		vlog("-> %s", page.Path)
-		htmlc++
-		assetc += len(page.Assets)
-	}
-	ilog.Printf("generated %d html files, copied %d asset files\n", htmlc, assetc)
+	ilog.Println("copying assets...")
+	assetc := copyAssets()
 
+	ilog.Println("building project...")
+	pagec := 0
+	for _, p := range content {
+		_, err = p.Build(config.Output, findPageTemplate(p, templates))
+		if err != nil {
+			ilog.Printf("skipping %s: %s\n", p.Path, err)
+			continue
+		}
+
+		for _, asset := range p.Assets {
+			src := filepath.Join(config.Contents, asset)
+			dst := filepath.Join(config.Output, asset)
+			check(CopyFile(src, dst))
+		}
+
+		pagec++
+		assetc += len(p.Assets)
+		vlog("-> %s", p.Path)
+	}
+
+	ilog.Printf("generated %d html files, copied %d asset files\n", pagec, assetc)
 	ilog.Println("pagr success")
 	return
 }
 
-func findTemplateIndex(p Page, templates []suti.Template) (t int) {
-	for t, template := range templates {
-		if template.Name == p.TemplateName() {
-			return t
-		}
+func loadConfigFile() Config {
+	if len(flagConfig) > 0 {
+		vlog("loading '%s'", flagConfig)
+		c, err := NewConfigFromFile(flagConfig)
+		check(err)
+		return c
+	} else {
+		ilog.Println("no cfg passed, using defaults")
+		return NewConfig()
 	}
-	return -1
 }
 
-func buildPage(cfg Config, p Page, t []suti.Template) error {
-	var tmpl *suti.Template
+func findPageTemplate(p Page, t []suti.Template) (tmpl suti.Template) {
 	for i, template := range t {
 		if template.Name == p.TemplateName() {
-			tmpl = &t[i]
+			tmpl = t[i]
+			break
 		}
 	}
-	if tmpl == nil {
-		return fmt.Errorf("failed to find template '%s'", p.TemplateName())
-	}
-
-	_, err := p.Build(cfg.Output, *tmpl)
-	check(err)
-	check(p.CopyAssets(cfg.Contents, cfg.Output))
-	return err
+	return
 }
 
-func copyAssets(wg sync.WaitGroup, cfg Config) (n int) {
-	for _, a := range cfg.Assets {
-		err := filepath.Walk(a, func(src string, info fs.FileInfo, err error) error {
-			if err == nil && !info.IsDir() && !ignoreFile(src) {
-				a = filepath.Clean(a)
-				path := strings.TrimPrefix(src, a)
-				n++
-				check(CopyFile(src, filepath.Join(cfg.Output, path)))
-				vlog("-> %s", path)
-			}
-			return err
-		})
-		if !os.IsNotExist(err) {
-			check(err)
-		}
+func copyAssets() (count int) {
+	for _, asset := range config.Assets {
+		filepath.Walk(asset,
+			func(path string, info os.FileInfo, err error) error {
+				if err == nil && !info.IsDir() && !ignoreFile(path) {
+					dst := strings.TrimPrefix(path, asset)
+					err = CopyFile(path, filepath.Join(config.Output, dst))
+					count++
+				}
+
+				if err != nil {
+					ilog.Printf("skipping %s: %s\n", path, err)
+					err = nil
+				}
+
+				return err
+			})
 	}
-	return n
+	return
 }
+
+

@@ -717,6 +717,8 @@ mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b h1:DxJ5nJdkhDlLok9K6qO+5290kphD
 mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b/go.mod h1:2odslEg/xrtNQqCYg2/jCoyKnw3vv5biOc3JnIcYfL4=
 mvdan.cc/unparam v0.0.0-20190720180237-d51796306d8f h1:Cq7MalBHYACRd6EesksG1Q8EoIAKOsiZviGKbOLIej4=
 mvdan.cc/unparam v0.0.0-20190720180237-d51796306d8f/go.mod h1:4G1h5nDURzA3bwVMZIVpwbkw+04kSxk3rAtzlimaUJw=
+notabug.org/gearsix/suti v0.7.1 h1:kTGp2qUeslYuzvTcgq/utZsJFXwkcRp5wDlfU83cOfs=
+notabug.org/gearsix/suti v0.7.1/go.mod h1:JFgJVp+7hQiR/ugF6jU24HwmZJ3WWNp0oMQZr5QKIXs=
 notabug.org/gearsix/suti v1.0.0 h1:7DvbBIBELa9WVyvISxd5JAhLxbOTRfpjic3Sry9F2PE=
 notabug.org/gearsix/suti v1.0.0/go.mod h1:TfuoxBbT2YtIy6d5BqqMC6rfrlKb5d3/mIS6/y5SXGU=
 rsc.io/binaryregexp v0.2.0 h1:HfqmD5MEmC0zvwBuF187nq9mdnXjXsSivRiXN7SmRkE=

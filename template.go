@@ -1,8 +1,8 @@
 package main
 
 import (
-	"io/fs"
 	"notabug.org/gearsix/suti"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -18,7 +18,7 @@ const DefaultTemplateName = "root"
 func LoadTemplateDir(dir string) (templates []suti.Template, err error) {
 	templatePaths := make(map[string][]string) // map[rootPath][]partialPaths...
 
-	err = filepath.Walk(dir, func(path string, info fs.FileInfo, e error) error {
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, e error) error {
 		lang := strings.TrimPrefix(filepath.Ext(path), ".")
 		if e != nil || info.IsDir() || strings.Contains(path, ".ignore") || suti.IsSupportedTemplateLang(lang) == -1 {
 			return e
@@ -28,7 +28,7 @@ func LoadTemplateDir(dir string) (templates []suti.Template, err error) {
 		return e
 	})
 
-	err = filepath.Walk(dir, func(path string, info fs.FileInfo, e error) error {
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, e error) error {
 		lang := strings.TrimPrefix(filepath.Ext(path), ".")
 		if e != nil || info.IsDir() || ignoreFile(path) || suti.IsSupportedTemplateLang(lang) == -1 {
 			return e

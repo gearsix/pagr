@@ -4,17 +4,17 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
-	"io/fs"
 	"github.com/yuin/goldmark"
 	goldmarkext "github.com/yuin/goldmark/extension"
 	goldmarkparse "github.com/yuin/goldmark/parser"
 	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
+	"io"
+	"io/ioutil"
 	"notabug.org/gearsix/suti"
-	"path/filepath"
 	"os"
-	"strings"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -39,18 +39,20 @@ func isContentExt(ext string) int {
 }
 
 func lastModFile(fpath string) (t time.Time) {
-	if fd, e := os.Stat(fpath); e != nil {
+	if fd, err := os.Stat(fpath); err != nil {
 		t = time.Now()
 	} else if !fd.IsDir() {
 		t = fd.ModTime()
 	} else { // find last modified file in directory (depth 1)
-		dir, err := os.ReadDir(fpath)
-		if err != nil {
+		t = fd.ModTime()
+
+		var dir []os.FileInfo
+		if dir, err = ioutil.ReadDir(fpath); err != nil {
 			return t
 		}
 
 		for i, d := range dir {
-			if fd, err := d.Info(); err == nil && (i == 0 || fd.ModTime().After(t)) {
+			if i == 0 || d.ModTime().After(t) {
 				t = fd.ModTime()
 			}
 		}
@@ -72,7 +74,7 @@ func LoadContentsDir(dir string) (p []Page, e error) {
 	pages := make(map[string]Page)
 	dmetas := make(map[string]Meta)
 
-	e = filepath.Walk(dir, func(fpath string, info fs.FileInfo, err error) error {
+	e = filepath.Walk(dir, func(fpath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -139,7 +141,7 @@ func LoadContentsDir(dir string) (p []Page, e error) {
 func NewContentFromFile(fpath string) (c Content, err error) {
 	var buf []byte
 	if f, err := os.Open(fpath); err == nil {
-		buf, err = io.ReadAll(f)
+		buf, err = ioutil.ReadAll(f)
 		f.Close()
 	}
 	if err != nil {

@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
+	"io/ioutil"
+	"notabug.org/gearsix/suti"
 	"os"
 	"path/filepath"
-	"notabug.org/gearsix/suti"
 	"strings"
 	"time"
 )
@@ -113,19 +114,12 @@ func (page *Page) applyDefaults(defaultMetas map[string]Meta) {
 	}
 }
 
-func (p *Page) CopyAssets(srcDir, outDir string) (err error) {
-	for _, a := range p.Assets {
-		CopyFile(filepath.Join(srcDir, a), filepath.Join(outDir, a))
-	}
-	return
-}
-
 func (p *Page) Build(outDir string, t suti.Template) (out string, err error) {
 	var buf bytes.Buffer
 	if buf, err = t.Execute(p); err == nil {
 		out = filepath.Join(outDir, p.Path, "index.html")
 		if err = os.MkdirAll(filepath.Dir(out), 0755); err == nil {
-			err = os.WriteFile(out, buf.Bytes(), 0644)
+			err = ioutil.WriteFile(out, buf.Bytes(), 0644)
 		}
 	}
 	return out, err
