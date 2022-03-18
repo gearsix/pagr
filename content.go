@@ -18,6 +18,7 @@ import (
 	"time"
 )
 
+// Content is the converted HTML string of a Content file
 type Content string
 
 var contentExts = [6]string{
@@ -65,14 +66,14 @@ func lastModFile(fpath string) (t time.Time) {
 // filetype found in `contentExts`, will be parsed into a string of HTML
 // and appended to the `.Content` of the `Page` generated for it's parent
 // directory.
-func LoadContentsDir(dir string) (p []Page, e error) {
+func LoadContentDir(dir string) (p []Page, e error) {
 	if _, e = os.Stat(dir); e != nil {
 		return
 	}
 	dir = filepath.Clean(dir)
 
 	pages := make(map[string]Page)
-	dmetas := make(map[string]Meta)
+	dmeta := make(map[string]Meta)
 
 	e = filepath.Walk(dir, func(fpath string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -87,34 +88,13 @@ func LoadContentsDir(dir string) (p []Page, e error) {
 			pages[path] = NewPage(path, lastModFile(fpath))
 		} else {
 			path := pagePath(dir, filepath.Dir(fpath))
-			page := pages[path]
-
-			if suti.IsSupportedDataLang(filepath.Ext(fpath)) > -1 {
-				var m Meta
-				if err = suti.LoadDataFilepath(fpath, &m); err == nil {
-					if strings.Contains(filepath.Base(fpath), "defaults.") ||
-						strings.Contains(filepath.Base(fpath), "default.") {
-						if meta, ok := dmetas[path]; ok {
-							m.MergeMeta(meta, false)
-						}
-						dmetas[path] = m
-					} else {
-						page.Meta.MergeMeta(m, true)
-					}
-				}
-			} else if isContentExt(filepath.Ext(fpath)) > -1 {
-				err = page.NewContentFromFile(fpath)
-			} else if suti.IsSupportedDataLang(filepath.Ext(fpath)) == -1 {
-				page.Assets = append(page.Assets, filepath.Join(path, filepath.Base(fpath)))
-			}
-
-			pages[path] = page
+			pages[path], dmeta, err = loadContentFile(pages[path], dmeta, fpath, path)
 		}
 		return err
 	})
 
 	for _, page := range pages {
-		page.applyDefaults(dmetas)
+		page.applyDefaults(dmeta)
 		p = append(p, page)
 	}
 
@@ -130,6 +110,31 @@ func LoadContentsDir(dir string) (p []Page, e error) {
 	p = BuildSitemap(p)
 
 	return
+}
+
+func loadContentFile(p Page, d map[string]Meta, fpath string, ppath string) (
+Page, map[string]Meta, error) {
+	var err error
+	if suti.IsSupportedDataLang(filepath.Ext(fpath)) > -1 {
+		var m Meta
+		if err = suti.LoadDataFilepath(fpath, &m); err == nil {
+			if strings.Contains(filepath.Base(fpath), "defaults.") ||
+				strings.Contains(filepath.Base(fpath), "default.") {
+				if meta, ok := d[ppath]; ok {
+					m.MergeMeta(meta, false)
+				}
+				d[ppath] = m
+			} else {
+				p.Meta.MergeMeta(m, true)
+			}
+		}
+	} else if isContentExt(filepath.Ext(fpath)) > -1 {
+		err = p.NewContentFromFile(fpath)
+	} else if suti.IsSupportedDataLang(filepath.Ext(fpath)) == -1 {
+		a := filepath.Join(ppath, filepath.Base(fpath))
+		p.Assets = append(p.Assets, a)
+	}
+	return p, d, err
 }
 
 // NewContentFromFile loads the file from `fpath` and converts it to HTML

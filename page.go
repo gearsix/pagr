@@ -99,6 +99,28 @@ func (p *Page) TemplateName() string {
 	}
 }
 
+// Build will run `t.Execute(p)` and write the result to
+// `outDir/p.Path/index.html`.
+func (p *Page) Build(outDir string, t suti.Template) (out string, err error) {
+	var buf bytes.Buffer
+	if buf, err = t.Execute(p); err == nil {
+		out = filepath.Join(outDir, p.Path, "index.html")
+		if err = os.MkdirAll(filepath.Dir(out), 0755); err == nil {
+			err = ioutil.WriteFile(out, buf.Bytes(), 0644)
+		}
+	}
+	return out, err
+}
+
+// call `NewContentFromFile` and append it to `p.Contents`
+func (p *Page) NewContentFromFile(fpath string) (err error) {
+	var c Content
+	if c, err = NewContentFromFile(fpath); err == nil {
+		p.Contents = append(p.Contents, c)
+	}
+	return
+}
+
 func (page *Page) applyDefaults(defaultMetas map[string]Meta) {
 	for i, p := range page.Path {
 		if p != '/' {
@@ -112,23 +134,4 @@ func (page *Page) applyDefaults(defaultMetas map[string]Meta) {
 			page.Meta.MergeMeta(meta, false)
 		}
 	}
-}
-
-func (p *Page) Build(outDir string, t suti.Template) (out string, err error) {
-	var buf bytes.Buffer
-	if buf, err = t.Execute(p); err == nil {
-		out = filepath.Join(outDir, p.Path, "index.html")
-		if err = os.MkdirAll(filepath.Dir(out), 0755); err == nil {
-			err = ioutil.WriteFile(out, buf.Bytes(), 0644)
-		}
-	}
-	return out, err
-}
-
-func (p *Page) NewContentFromFile(fpath string) (err error) {
-	var c Content
-	if c, err = NewContentFromFile(fpath); err == nil {
-		p.Contents = append(p.Contents, c)
-	}
-	return
 }

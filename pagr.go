@@ -52,7 +52,7 @@ func main() {
 
 	var err error
 	var content []Page
-	content, err = LoadContentsDir(config.Contents)
+	content, err = LoadContentDir(config.Contents)
 	check(err)
 	ilog.Printf("loaded %d content pages", len(content))
 
