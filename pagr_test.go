@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"io/ioutil"
 	"path/filepath"
 	"testing"
 	"time"
@@ -17,20 +18,18 @@ var templates = map[string]string{ // [ext]template
 func createTestTemplates(dir string) (err error) {
 	writef := func(path, data string) {
 		if err == nil {
-			err = os.WriteFile(path, []byte(data), 0644)
+			err = ioutil.WriteFile(path, []byte(data), 0644)
 		}
 	}
 
 	for ext, data := range templates {
-		writef(fmt.Sprintf("%s/root.%s", dir, ext), data)
-		writef(fmt.Sprintf("%s/root.ignore.%s", dir, ext), data)
-		writef(fmt.Sprintf("%s/root.%s.ignore", dir, ext), data)
+		writef(filepath.Join(dir, fmt.Sprintf("root.%s", ext)), data)
+		writef(filepath.Join(dir, fmt.Sprintf("root.ignore.%s", ext)), data)
+		writef(filepath.Join(dir, fmt.Sprintf("root.%s.ignore", ext)), data)
 
-		pdir := filepath.Join(dir, ext)
-		err = os.Mkdir(pdir, 0755)
-		writef(fmt.Sprintf("%s/partial.%s", pdir, ext), data)
-		writef(fmt.Sprintf("%s/partial.ignore.%s", pdir, ext), data)
-		writef(fmt.Sprintf("%s/partial.%s.ignore", pdir, ext), data)
+		writef(filepath.Join(dir, fmt.Sprintf("partial.%s", ext)), data)
+		writef(filepath.Join(dir, fmt.Sprintf("partial.ignore.%s", ext)), data)
+		writef(filepath.Join(dir, fmt.Sprintf("partial.%s.ignore", ext)), data)
 
 		if err != nil {
 			break
@@ -106,7 +105,7 @@ var asset = []byte{ // 5x5 black png image
 func createTestContents(dir string) (err error) {
 	writef := func(path, data string) {
 		if err == nil {
-			err = os.WriteFile(path, []byte(data), 0644)
+			err = ioutil.WriteFile(path, []byte(data), 0644)
 		}
 	}
 
@@ -114,7 +113,10 @@ func createTestContents(dir string) (err error) {
 		if l == 0 {
 			writef(fmt.Sprintf("%s/defaults.json", dir), "{ \"default\": \"data\" }")
 		} else if l > 1 {
-			dir, err = os.MkdirTemp(dir, "page")
+			dir = filepath.Join(dir, lang)
+			if err := os.MkdirAll(dir, 0775); err != nil {
+				fmt.Errorf("failed to create temporary test dir '%s': %s", dir, err)
+			}
 		}
 		writef(fmt.Sprintf("%s/.page.toml", dir), "page = \"data\"")
 		writef(fmt.Sprintf("%s/body%d%s", dir, l, lang), contents[lang])

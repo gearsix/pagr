@@ -12,7 +12,10 @@ import (
 func TestNewConfigFromFile(test *testing.T) {
 	test.Parallel()
 
-	tdir := test.TempDir()
+	tdir := filepath.Join(os.TempDir(), "pagr_test", "TestNewConfigFromFile")
+	if err := os.MkdirAll(tdir, 0775); err != nil {
+		test.Errorf("failed to create temporary test dir: %s", tdir)
+	}
 	cfgp := fmt.Sprintf("%s/%s.toml", tdir, Name)
 
 	if f, err := os.Create(cfgp); err != nil {
@@ -41,5 +44,9 @@ func TestNewConfigFromFile(test *testing.T) {
 		}
 	} else {
 		test.Fatal(err)
+	}
+	
+	if err := os.RemoveAll(tdir); err != nil {
+		test.Error(err)
 	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"notabug.org/gearsix/suti"
 	"os"
+	"io/ioutil"
 	"path/filepath"
 	"testing"
 	"time"
@@ -75,39 +76,14 @@ func TestTemplateName(test *testing.T) {
 	}
 }
 
-func TestCopyAssets(test *testing.T) {
-	test.Parallel()
-
-	var p Page
-	src := []string{"1", "2", "3", "4"}
-
-	srcDir := test.TempDir()
-	for _, fname := range src {
-		p.Assets = append(p.Assets, fname)
-		path := filepath.Join(srcDir, fname)
-		if f, err := os.Create(path); err != nil {
-			test.Fatalf("failed to create source file '%s'", path)
-		} else {
-			f.Close()
-		}
-	}
-
-	dstDir := test.TempDir()
-	if err := p.CopyAssets(srcDir, dstDir); err != nil {
-		test.Fatal("CopyAssets failed", err)
-	}
-	for _, fname := range src {
-		if _, err := os.Stat(dstDir + "/" + fname); err != nil {
-			test.Fatal("missing file", dstDir+"/"+fname)
-		}
-	}
-}
-
 func TestBuild(test *testing.T) {
 	test.Parallel()
 
 	var err error
-	tdir := test.TempDir()
+	tdir := filepath.Join(os.TempDir(), "pagr_test", "TestBuild")
+	if err := os.MkdirAll(tdir, 0775); err != nil {
+		test.Errorf("failed to create temporary test dir: %s", tdir)
+	}
 	p := NewPage("/test", time.Now())
 	t, err := suti.LoadTemplateString("tmpl", "test", `{{.Meta.Title}} {{template "p" .}}`, map[string]string{"p": "p"})
 	if err != nil {
@@ -119,10 +95,14 @@ func TestBuild(test *testing.T) {
 		test.Fatal(err)
 	}
 	var fbuf []byte
-	if fbuf, err = os.ReadFile(fpath); err != nil {
+	if fbuf, err = ioutil.ReadFile(fpath); err != nil {
 		test.Fatal(err)
 	}
 	if string(fbuf) != "Test p" {
 		test.Fatalf("invalid result parsed: '%s', expected: 'Test p'", string(fbuf))
+	}
+	
+	if err := os.RemoveAll(tdir); err != nil {
+		test.Error(err)
 	}
 }

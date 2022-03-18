@@ -2,22 +2,33 @@ package main
 
 import (
 	"os"
+	"path/filepath"
+	"io/ioutil"
 	"testing"
 )
 
-func TestLoadContentsDir(test *testing.T) {
+func TestLoadContentDir(test *testing.T) {
+	test.Parallel()
+	
 	var err error
-	tdir := test.TempDir()
+	tdir := filepath.Join(os.TempDir(), "pagr_test_TestLoadContentDir")
+	if err := os.MkdirAll(tdir, 0775); err != nil {
+		test.Errorf("failed to create temporary test dir: %s", tdir)
+	}
 	if err = createTestContents(tdir); err != nil {
 		test.Errorf("failed to create test content: %s", err)
 	}
 
 	var p []Page
-	if p, err = LoadContentsDir(tdir); err != nil {
-		test.Fatalf("LoadContentsDir failed: %s", err)
+	if p, err = LoadContentDir(tdir); err != nil {
+		test.Fatalf("LoadContentDir failed: %s", err)
 	}
 
 	validateTestPages(test, p, err)
+	
+	if err = os.RemoveAll(tdir); err != nil {
+		test.Error(err)
+	}
 }
 
 func TestNewContentFromFile(test *testing.T) {
@@ -32,13 +43,16 @@ func TestNewContentFromFile(test *testing.T) {
 		"html": `<b>test</b>`,
 	}
 
-	tdir := test.TempDir()
+	tdir := filepath.Join(os.TempDir(), "pagr_test", "TestNewContentFromFile")
+	if err := os.MkdirAll(tdir, 0775); err != nil {
+		test.Errorf("failed to create temporary test dir: %s", tdir)
+	}
 	contentsPath := func(ftype string) string {
 		return tdir + "/test." + ftype
 	}
 
 	for ftype, data := range contents {
-		if err = os.WriteFile(contentsPath(ftype), []byte(data), 0666); err != nil {
+		if err = ioutil.WriteFile(contentsPath(ftype), []byte(data), 0666); err != nil {
 			test.Error("TestNewContentFromFile setup failed:", err)
 		}
 	}
@@ -48,5 +62,9 @@ func TestNewContentFromFile(test *testing.T) {
 		if err = p.NewContentFromFile(contentsPath(ftype)); err != nil {
 			test.Fatal("NewContentFromFile failed for", ftype, err)
 		}
+	}
+	
+	if err = os.RemoveAll(tdir); err != nil {
+		test.Error(err)
 	}
 }

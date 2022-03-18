@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"io/ioutil"
 	"path/filepath"
 	"testing"
 )
@@ -9,12 +10,15 @@ import (
 func TestCopyFile(test *testing.T) {
 	test.Parallel()
 
-	tdir := test.TempDir()
+	tdir := filepath.Join(os.TempDir(), "pagr_test", "TestCopyFile")
+	if err := os.MkdirAll(tdir, 0775); err != nil {
+		test.Errorf("failed to create temporary test dir: %s", tdir)
+	}
 	src := filepath.Join(tdir, "/src")
 	srcData := []byte("data")
 	dst := filepath.Join(tdir, "/dst")
 
-	if err := os.WriteFile(src, srcData, 0666); err != nil {
+	if err := ioutil.WriteFile(src, srcData, 0666); err != nil {
 		test.Error("setup failed, could not write", tdir+"/src")
 	}
 
@@ -25,11 +29,15 @@ func TestCopyFile(test *testing.T) {
 		test.Fatalf("could not stat '%s'", dst)
 	}
 
-	if buf, err := os.ReadFile(dst); err != nil {
+	if buf, err := ioutil.ReadFile(dst); err != nil {
 		test.Errorf("could not read '%s'", dst)
 	} else if len(buf) < len(srcData) {
 		test.Fatalf("not all srcData (%s) copied to '%s' (%s)", srcData, dst, buf)
 	} else if string(buf) != string(srcData) {
 		test.Fatalf("copied srcData (%s) does not match source (%s)", buf, srcData)
+	}
+	
+	if err := os.RemoveAll(tdir); err != nil {
+		test.Error(err)
 	}
 }
