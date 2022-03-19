@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+/* shared *_test.go functions, since pagr.go doesn't have anything that requires testing */
+
 var templates = map[string]string{ // [ext]template
 	"tmpl": "{{.Contents}}",
 	"hmpl": "{{.Contents}}",
@@ -111,16 +113,20 @@ func createTestContents(dir string) (err error) {
 
 	for l, lang := range contentExts {
 		if l == 0 {
-			writef(fmt.Sprintf("%s/defaults.json", dir), "{ \"default\": \"data\" }")
-		} else if l > 1 {
-			dir = filepath.Join(dir, lang)
+			writef(filepath.Join(dir, "defaults.json"), "{ \"default\": \"data\" }")
+		} else if l == 1 {
+			dir = filepath.Join(dir, lang[1:])
+		} else if l > 2 {
+			dir = filepath.Join(filepath.Dir(dir), lang[1:])
+		}
+		if l >= 1 {
 			if err := os.MkdirAll(dir, 0775); err != nil {
 				fmt.Errorf("failed to create temporary test dir '%s': %s", dir, err)
 			}
 		}
-		writef(fmt.Sprintf("%s/.page.toml", dir), "page = \"data\"")
-		writef(fmt.Sprintf("%s/body%d%s", dir, l, lang), contents[lang])
-		writef(fmt.Sprintf("%s/asset.png", dir), string(asset))
+		writef(filepath.Join(dir, "meta.toml"), "page = \"data\"")
+		writef(filepath.Join(dir, fmt.Sprintf("body%d%s", l, lang)), contents[lang])
+		writef(filepath.Join(dir, "asset.png"), string(asset))
 
 		if err != nil {
 			break
@@ -216,7 +222,7 @@ func validateTestPages(t *testing.T, pages []Page, e error) {
 			t.Errorf("missing page Meta key for page: '%s'", p.Path)
 		}
 		if _, ok := p.Meta["default"]; !ok || len(p.Meta) == 0 {
-			t.Error("empty default Meta key for page:", p.Path)
+			t.Error("empty 'default' Meta key for page:", p.Path)
 		}
 		if len(p.Contents) == 0 {
 			t.Error("empty Contents for page:", p.Path)
