@@ -32,6 +32,7 @@ int copyf(const char *src, const char *dst)
 			total += w;
 		}
 	} while (!feof(srcf));
+	
 	if (total == siz) ret = EXIT_SUCCESS;
 
 ABORT:
@@ -71,8 +72,9 @@ func CopyFile(src, dst string) (err error) {
 		return err
 	}
 
-	// only copy if dst doesnt exist or has different name/size
-	if dstfi == nil || srcfi.Name() == dstfi.Name() && srcfi.Size() == dstfi.Size() {
+	// only copy if dst doesnt exist or has different name/size/modtime
+	if dstfi == nil || srcfi.Name() != dstfi.Name() ||
+		srcfi.Size() != dstfi.Size() || srcfi.ModTime() != dstfi.ModTime() {
 		cSrc := C.CString(src)
 		cDst := C.CString(dst)
 		if uint32(C.copyf(cSrc, cDst)) != 0 {
