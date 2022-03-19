@@ -67,6 +67,8 @@ func main() {
 	ilog.Println("building project...")
 	pagec := 0
 	for _, p := range content {
+		vlog("+ %s", p.Path)
+		
 		_, err = p.Build(config.Output, findPageTemplate(p, templates))
 		if err != nil {
 			ilog.Printf("skipping %s: %s\n", p.Path, err)
@@ -77,11 +79,11 @@ func main() {
 			src := filepath.Join(config.Contents, asset)
 			dst := filepath.Join(config.Output, asset)
 			check(CopyFile(src, dst))
+			vlog("\t-> %s\n", asset)
 		}
 
 		pagec++
 		assetc += len(p.Assets)
-		vlog("-> %s", p.Path)
 	}
 
 	ilog.Printf("generated %d html files, copied %d asset files\n", pagec, assetc)
@@ -113,16 +115,18 @@ func findPageTemplate(p Page, t []suti.Template) (tmpl suti.Template) {
 
 func copyAssets() (count int) {
 	for _, asset := range config.Assets {
+		asset = filepath.Clean(asset)
 		filepath.Walk(asset,
 			func(path string, info os.FileInfo, err error) error {
 				if err == nil && !info.IsDir() && !ignoreFile(path) {
-					dst := strings.TrimPrefix(path, asset)
+					dst := strings.TrimPrefix(filepath.Clean(path), asset)
 					err = CopyFile(path, filepath.Join(config.Output, dst))
+					vlog("\t-> %s\n", dst)
 					count++
 				}
 
 				if err != nil {
-					ilog.Printf("skipping %s: %s\n", path, err)
+					ilog.Printf("copy failed for %s: %s\n", path, err)
 					err = nil
 				}
 
