@@ -116,10 +116,11 @@ func loadContentFile(p Page, d map[string]Meta, fpath string, ppath string) (
 Page, map[string]Meta, error) {
 	var err error
 	if suti.IsSupportedDataLang(filepath.Ext(fpath)) > -1 {
+		fname := strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
+		
 		var m Meta
 		if err = suti.LoadDataFilepath(fpath, &m); err == nil {
-			if strings.Contains(filepath.Base(fpath), "defaults.") ||
-				strings.Contains(filepath.Base(fpath), "default.") {
+			if fname == "defaults" {
 				if meta, ok := d[ppath]; ok {
 					m.MergeMeta(meta, false)
 				}
