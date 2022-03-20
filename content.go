@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"notabug.org/gearsix/suti"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -39,22 +40,50 @@ func isContentExt(ext string) int {
 	return -1
 }
 
-func lastModFile(fpath string) (t time.Time) {
-	if fd, err := os.Stat(fpath); err != nil {
-		t = time.Now()
-	} else if !fd.IsDir() {
-		t = fd.ModTime()
-	} else { // find last modified file in directory (depth 1)
-		t = fd.ModTime()
+func gitModTime(fpath string) (mod time.Time, err error) {
+	if fpath, err = filepath.Abs(fpath); err != nil {
+		return
+	}
+	
+	git := exec.Command("git", "-C", filepath.Dir(fpath), "log", "-1", "--format='%ad'", "--", fpath)
+	var out []byte
+	if out, err = git.Output(); err == nil {
+		outstr := strings.ReplaceAll(string(out), "'", "")
+		outstr = strings.TrimSuffix(outstr, "\n")
+		mod, err = time.Parse("Mon Jan 2 15:04:05 2006 -0700", outstr)
+	} else {
+		fmt.Println(err)
+	}
+	return
+}
 
-		var dir []os.FileInfo
-		if dir, err = ioutil.ReadDir(fpath); err != nil {
-			return t
+func lastPageMod(fpath string) (t time.Time) {
+	if fd, err := os.Stat(fpath); err != nil {
+		if t, err = gitModTime(fpath); err != nil {
+			t = time.Now()
+		}
+	} else {
+		if t, err = gitModTime(fpath); err != nil {
+			t = fd.ModTime()
 		}
 
-		for i, d := range dir {
-			if i == 0 || d.ModTime().After(t) {
-				t = fd.ModTime()
+		if fd.IsDir() { // find last modified file in directory (depth 1)
+			var dir []os.FileInfo
+			if dir, err = ioutil.ReadDir(fpath); err == nil {
+				for i, f := range dir {
+					if f.IsDir() {
+						continue
+					}
+					
+					var ft time.Time
+					if ft, err = gitModTime(filepath.Join(fpath, f.Name())); err != nil {
+						ft = fd.ModTime()
+					}
+					
+					if i == 0 || ft.After(t) {
+						t = ft
+					}
+				}
 			}
 		}
 	}
@@ -85,7 +114,7 @@ func LoadContentDir(dir string) (p []Page, e error) {
 
 		if info.IsDir() {
 			path := pagePath(dir, fpath)
-			pages[path] = NewPage(path, lastModFile(fpath))
+			pages[path] = NewPage(path, lastPageMod(fpath))
 		} else {
 			path := pagePath(dir, filepath.Dir(fpath))
 			pages[path], dmeta, err = loadContentFile(pages[path], dmeta, fpath, path)
