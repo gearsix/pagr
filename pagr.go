@@ -5,6 +5,7 @@ import (
 	"log"
 	"notabug.org/gearsix/suti"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -12,6 +13,7 @@ import (
 const Name = "pagr"
 const Version = "0.0.0"
 
+var gitBin string
 var config Config
 var flagConfig string
 var flagVerbose bool
@@ -42,6 +44,7 @@ func ignoreFile(filepath string) bool {
 func init() {
 	flag.BoolVar(&flagVerbose, "v", false, "print verbose ilog.")
 	flag.StringVar(&flagConfig, "cfg", "", "path to pagr project configuration file")
+	gitBin, _ = exec.LookPath("git")
 }
 
 func main() {

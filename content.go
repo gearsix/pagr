@@ -40,12 +40,18 @@ func isContentExt(ext string) int {
 	return -1
 }
 
+// FIX this seems to kill performance
 func gitModTime(fpath string) (mod time.Time, err error) {
+	if gitBin == "" {
+		err = fmt.Errorf("git binary not found")
+		return
+	}
+
 	if fpath, err = filepath.Abs(fpath); err != nil {
 		return
 	}
 	
-	git := exec.Command("git", "-C", filepath.Dir(fpath), "log", "-1", "--format='%ad'", "--", fpath)
+	git := exec.Command(gitBin, "-C", filepath.Dir(fpath), "log", "-1", "--format='%ad'", "--", fpath)
 	var out []byte
 	if out, err = git.Output(); err == nil {
 		outstr := strings.ReplaceAll(string(out), "'", "")
