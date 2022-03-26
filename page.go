@@ -89,13 +89,13 @@ func NewPage(path string, updated time.Time) Page {
 // (in the order) and return the value of the first existing key as a string.
 // If `.Meta` neither has the key `template` or `Template`, then it will
 // return `DefaultTemplateName` from [./template.go].
-func (p *Page) TemplateName() string {
+func (p *Page) TemplateName(defaultName string) string {
 	if v, ok := p.Meta["template"]; ok {
 		return v.(string)
 	} else if v, ok = p.Meta["Template"]; ok {
 		return v.(string)
 	} else {
-		return DefaultTemplateName
+		return defaultName
 	}
 }
 

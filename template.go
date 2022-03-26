@@ -7,10 +7,6 @@ import (
 	"strings"
 )
 
-// DefaultTemplateName provides the default name for the template used
-// when one isn't specified in a `Page.Meta`.
-const DefaultTemplateName = "_root"
-
 // LoadTemplateDir loads all files in `dir` that are not directories as a `suti.Template`
 // by calling `suti.LoadTemplateFile`. Partials for each template will be parsed from all
 // files in a directory matching the base filename of the template (not including

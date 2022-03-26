@@ -107,10 +107,10 @@ func loadConfigFile() Config {
 }
 
 func findPageTemplate(p Page, t []suti.Template) (tmpl suti.Template) {
+	ptmpl := p.TemplateName(config.DefaultTemplate)
 	for i, template := range t {
-		if template.Name == p.TemplateName() {
-			tmpl = t[i]
-			break
+		if template.Name == ptmpl {
+			return t[i]
 		}
 	}
 	return
