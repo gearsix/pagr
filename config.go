@@ -39,7 +39,7 @@ func NewConfig() Config {
 		Templates:       "./templates",
 		Assets:          []string{"./assets"},
 		Output:          "./out",
-		DefaultTemplate: "_root",
+		DefaultTemplate: "default",
 	}
 }
 

@@ -40,7 +40,7 @@ func isContentExt(ext string) int {
 	return -1
 }
 
-// FIX this seems to kill performance
+// FIX kills performance on windows
 func gitModTime(fpath string) (mod time.Time, err error) {
 	if gitBin == "" {
 		err = fmt.Errorf("git binary not found")
@@ -147,26 +147,26 @@ func LoadContentDir(dir string) (p []Page, e error) {
 	return
 }
 
-func loadContentFile(p Page, d map[string]Meta, fpath string, ppath string) (
-Page, map[string]Meta, error) {
+func loadContentFile(p Page, defs map[string]Meta, fpath string, ppath string) (Page, map[string]Meta, error) {
 	var err error
-	if suti.IsSupportedDataLang(filepath.Ext(fpath)) > -1 {
-		fname := strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
-		
+	fname := strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
+	
+	if suti.IsSupportedDataLang(filepath.Ext(fpath)) != -1 &&
+		(fname == "defaults" || fname == "meta") {
 		var m Meta
 		if err = suti.LoadDataFilepath(fpath, &m); err == nil {
-			if fname == "defaults" {
+			if fname == "defaults" || fname == "default" {
 				if meta, ok := d[ppath]; ok {
 					m.MergeMeta(meta, false)
+					defs[ppath] = m
 				}
-				d[ppath] = m
-			} else {
+			} else if fname == "meta" {
 				p.Meta.MergeMeta(m, true)
 			}
 		}
-	} else if isContentExt(filepath.Ext(fpath)) > -1 {
+	} else if isContentExt(filepath.Ext(fpath)) != -1 {
 		err = p.NewContentFromFile(fpath)
-	} else if suti.IsSupportedDataLang(filepath.Ext(fpath)) == -1 {
+	} else {
 		a := filepath.Join(ppath, filepath.Base(fpath))
 		p.Assets = append(p.Assets, a)
 	}
