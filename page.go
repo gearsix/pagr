@@ -41,8 +41,16 @@ type Page struct {
 	Nav      Nav
 	Meta     Meta
 	Contents []Content
-	Assets   []string
+	Assets   Assets
 	Updated  string
+}
+
+type Assets struct {
+	All    []string
+	Audio  []*string
+	Image  []*string
+	Video  []*string
+	Misc   []*string
 }
 
 // Nav is a struct that provides a set of pointers for navigating a
@@ -80,7 +88,7 @@ func NewPage(path string, updated time.Time) Page {
 		Nav:      Nav{},
 		Meta:     Meta{"Title": titleFromPath(path)},
 		Contents: make([]Content, 0),
-		Assets:   make([]string, 0),
+		Assets:   Assets{},
 		Updated:  updated.Format(timefmt),
 	}
 }

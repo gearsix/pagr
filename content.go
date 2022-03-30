@@ -168,7 +168,18 @@ func loadContentFile(p Page, defs map[string]Meta, fpath string, ppath string) (
 		err = p.NewContentFromFile(fpath)
 	} else {
 		a := filepath.Join(ppath, filepath.Base(fpath))
-		p.Assets = append(p.Assets, a)
+		p.Assets.All = append(p.Assets.All, a)
+		ref := &p.Asset.all[len(p.Assets.All)-1]
+		mimetype := mime.TypeByExtension(filepath.Ext(fpath))
+		if strings.Contains(mimetype, "image/") {
+			p.Assets.Image = append(p.Assets.Images, ref)
+		} else if strings.Contains(mimetype, "video") {
+			p.Assets.Video = append(p.Assets.Video, ref)
+		} else if strings.Contains(mimetype, "audio") {
+			p.Assets.Audio = append(p.Assets.Audio, ref)
+		} else {
+			p.Assets.Misc = append(p.Assets.Misc, ref)
+		}
 	}
 	return p, d, err
 }
