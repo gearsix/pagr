@@ -66,27 +66,12 @@ p2
 
 p3
 `
-const contentsGfm = `p1
-p2
-
-	pre1
-	pre2
-
-p3`
-const contentsCm = `p1
-p2
-
-	pre1
-	pre2
-
-p3`
 
 var contents = map[string]string{
+	"": contentsTxt,
 	".txt":  contentsTxt,
 	".html": contentsHtml,
 	".md":   contentsMd,
-	".gfm":  contentsGfm,
-	".cm":   contentsCm,
 }
 
 var asset = []byte{ // 5x5 black png image - unecessary but I think this is cool
@@ -116,7 +101,7 @@ func createTestContents(dir string) (err error) {
 			writef(filepath.Join(dir, "defaults.json"), "{ \"default\": \"data\" }")
 		} else if l == 1 {
 			dir = filepath.Join(dir, lang[1:])
-		} else if l > 2 {
+		} else if l >= 2 {
 			dir = filepath.Join(filepath.Dir(dir), lang[1:])
 		}
 		if l >= 1 {

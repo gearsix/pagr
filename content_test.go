@@ -38,8 +38,6 @@ func TestNewContentFromFile(test *testing.T) {
 	contents := map[string]string{
 		"txt":  `test`,
 		"md":   "**test**\ntest",
-		"gfm":  "**test**\ntest",
-		"cm":   "**test**",
 		"html": `<b>test</b>`,
 	}
 

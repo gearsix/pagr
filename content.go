@@ -23,13 +23,11 @@ import (
 // Content is the converted HTML string of a Content file
 type Content string
 
-var contentExts = [6]string{
+var contentExts = [4]string{
 	"",      // pre-formatted text
 	".txt",  // plain-text
 	".html", // HTML
 	".md",   // commonmark + extensions (linkify, auto-heading id, unsafe HTML)
-	".gfm",  // github-flavoured markdown
-	".cm",   // commonmark
 }
 
 func isContentExt(ext string) int {
@@ -208,11 +206,7 @@ func NewContentFromFile(fpath string) (c Content, err error) {
 			case ".txt":
 				body = convertTextToHTML(bytes.NewReader(buf))
 			case ".md":
-				fallthrough
-			case ".gfm":
-				fallthrough
-			case ".cm":
-				body, err = convertMarkdownToHTML(lang, buf)
+				body, err = convertMarkdownToHTML(buf)
 			case ".html":
 				body = string(buf)
 			default:
@@ -275,48 +269,13 @@ func convertTextToHTML(in io.Reader) (html string) {
 
 // convertMarkdownToHTML initialises a `goldmark.Markdown` based on `lang` and
 // returns values from calling it's `Convert` function on `in`.
-// Markdown `lang` options, see the code for specfics:
-// - ".gfm" = github-flavoured markdown
-// - ".cm" = standard commonmark
-// - ".md" (and anything else) = commonmark + extensions (linkify, auto-heading id, unsafe HTML)
-func convertMarkdownToHTML(lang string, buf []byte) (md string, err error) {
-	var markdown goldmark.Markdown
-	switch lang {
-	case ".gfm":
-		markdown = goldmark.New(
-			goldmark.WithExtensions(
-				goldmarkext.GFM,
-				goldmarkext.Table,
-				goldmarkext.Strikethrough,
-				goldmarkext.Linkify,
-				goldmarkext.TaskList,
-			),
-			goldmark.WithParserOptions(
-				goldmarkparse.WithAutoHeadingID(),
-			),
-			goldmark.WithRendererOptions(
-				goldmarkhtml.WithUnsafe(),
-				goldmarkhtml.WithHardWraps(),
-			),
-		)
-	case ".cm":
-		markdown = goldmark.New()
-	case ".md":
-		fallthrough
-	default:
-		markdown = goldmark.New(
-			goldmark.WithExtensions(
-				goldmarkext.Linkify,
-			),
-			goldmark.WithParserOptions(
-				goldmarkparse.WithAutoHeadingID(),
-			),
-			goldmark.WithRendererOptions(
-				goldmarkhtml.WithUnsafe(),
-			),
-		)
-	}
-
+// ".md" (and anything else) = commonmark + extensions (linkify, auto-heading id, unsafe HTML)
+func convertMarkdownToHTML(buf []byte) (md string, err error) {
+	markdown := goldmark.New(
+		goldmark.WithExtensions(goldmarkext.Linkify),
+		goldmark.WithParserOptions(goldmarkparse.WithAutoHeadingID()),
+		goldmark.WithRendererOptions(goldmarkhtml.WithUnsafe()),
+	)
 	var out bytes.Buffer
 	err = markdown.Convert(buf, &out)
 	return out.String(), err
