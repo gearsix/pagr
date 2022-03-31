@@ -1,9 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
 	"notabug.org/gearsix/suti"
 	"os"
-	"io/ioutil"
 	"path/filepath"
 	"testing"
 	"time"
@@ -63,15 +63,12 @@ func TestTemplateName(test *testing.T) {
 	test.Parallel()
 
 	p := NewPage("/test", time.Now())
-	if p.TemplateName() != DefaultTemplateName {
-		test.Fatalf("'%s' not returned from TemplateName()", DefaultTemplateName)
-	}
 	p.Meta["Template"] = "test1"
-	if p.TemplateName() != "test1" {
+	if p.TemplateName("foo") != "test1" {
 		test.Fatalf("'test1' not returned from TemplateName()")
 	}
 	p.Meta["template"] = "test2"
-	if p.TemplateName() != "test2" {
+	if p.TemplateName("foo") != "test2" {
 		test.Fatalf("'test2' not returned from TemplateName()")
 	}
 }
@@ -101,7 +98,7 @@ func TestBuild(test *testing.T) {
 	if string(fbuf) != "Test p" {
 		test.Fatalf("invalid result parsed: '%s', expected: 'Test p'", string(fbuf))
 	}
-	
+
 	if err := os.RemoveAll(tdir); err != nil {
 		test.Error(err)
 	}

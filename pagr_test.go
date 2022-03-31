@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -227,7 +227,7 @@ func validateTestPages(t *testing.T, pages []Page, e error) {
 		if len(p.Contents) == 0 {
 			t.Error("empty Contents for page:", p.Path)
 		}
-		if len(p.Assets) == 0 {
+		if len(p.Assets.All) == 0 {
 			t.Error("empty Assets for page:", p.Path)
 		}
 		if pt, e = time.Parse(timefmt, p.Updated); e != nil {

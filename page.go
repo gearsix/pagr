@@ -46,11 +46,11 @@ type Page struct {
 }
 
 type Assets struct {
-	All    []string
-	Audio  []*string
-	Image  []*string
-	Video  []*string
-	Misc   []*string
+	All   []string
+	Audio []*string
+	Image []*string
+	Video []*string
+	Misc  []*string
 }
 
 // Nav is a struct that provides a set of pointers for navigating a

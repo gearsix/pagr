@@ -1,15 +1,15 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"io/ioutil"
 	"testing"
 )
 
 func TestLoadContentDir(test *testing.T) {
 	test.Parallel()
-	
+
 	var err error
 	tdir := filepath.Join(os.TempDir(), "pagr_test_TestLoadContentDir")
 	if err := os.MkdirAll(tdir, 0775); err != nil {
@@ -25,7 +25,7 @@ func TestLoadContentDir(test *testing.T) {
 	}
 
 	validateTestPages(test, p, err)
-	
+
 	if err = os.RemoveAll(tdir); err != nil {
 		test.Error(err)
 	}
@@ -63,7 +63,7 @@ func TestNewContentFromFile(test *testing.T) {
 			test.Fatal("NewContentFromFile failed for", ftype, err)
 		}
 	}
-	
+
 	if err = os.RemoveAll(tdir); err != nil {
 		test.Error(err)
 	}

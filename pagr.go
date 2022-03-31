@@ -71,14 +71,14 @@ func main() {
 	pagec := 0
 	for _, p := range content {
 		vlog("+ %s", p.Path)
-		
+
 		_, err = p.Build(config.Output, findPageTemplate(p, templates))
 		if err != nil {
 			ilog.Printf("skipping %s: %s\n", p.Path, err)
 			continue
 		}
 
-		for _, asset := range p.Assets {
+		for _, asset := range p.Assets.All {
 			src := filepath.Join(config.Contents, asset)
 			dst := filepath.Join(config.Output, asset)
 			check(CopyFile(src, dst))
@@ -86,7 +86,7 @@ func main() {
 		}
 
 		pagec++
-		assetc += len(p.Assets)
+		assetc += len(p.Assets.All)
 	}
 
 	ilog.Printf("generated %d html files, copied %d asset files\n", pagec, assetc)
@@ -138,5 +138,3 @@ func copyAssets() (count int) {
 	}
 	return
 }
-
-

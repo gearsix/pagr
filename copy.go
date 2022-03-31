@@ -32,7 +32,7 @@ int copyf(const char *src, const char *dst)
 			total += w;
 		}
 	} while (!feof(srcf));
-	
+
 	if (total == siz) ret = EXIT_SUCCESS;
 
 ABORT:

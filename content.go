@@ -10,6 +10,7 @@ import (
 	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 	"io"
 	"io/ioutil"
+	"mime"
 	"notabug.org/gearsix/suti"
 	"os"
 	"os/exec"
@@ -50,15 +51,13 @@ func gitModTime(fpath string) (mod time.Time, err error) {
 	if fpath, err = filepath.Abs(fpath); err != nil {
 		return
 	}
-	
+
 	git := exec.Command(gitBin, "-C", filepath.Dir(fpath), "log", "-1", "--format='%ad'", "--", fpath)
 	var out []byte
 	if out, err = git.Output(); err == nil {
 		outstr := strings.ReplaceAll(string(out), "'", "")
 		outstr = strings.TrimSuffix(outstr, "\n")
 		mod, err = time.Parse("Mon Jan 2 15:04:05 2006 -0700", outstr)
-	} else {
-		fmt.Println(err)
 	}
 	return
 }
@@ -80,12 +79,12 @@ func lastPageMod(fpath string) (t time.Time) {
 					if f.IsDir() {
 						continue
 					}
-					
+
 					var ft time.Time
 					if ft, err = gitModTime(filepath.Join(fpath, f.Name())); err != nil {
 						ft = fd.ModTime()
 					}
-					
+
 					if i == 0 || ft.After(t) {
 						t = ft
 					}
@@ -147,19 +146,19 @@ func LoadContentDir(dir string) (p []Page, e error) {
 	return
 }
 
-func loadContentFile(p Page, defs map[string]Meta, fpath string, ppath string) (Page, map[string]Meta, error) {
+func loadContentFile(p Page, def map[string]Meta, fpath string, ppath string) (Page, map[string]Meta, error) {
 	var err error
 	fname := strings.TrimSuffix(filepath.Base(fpath), filepath.Ext(fpath))
-	
+
 	if suti.IsSupportedDataLang(filepath.Ext(fpath)) != -1 &&
 		(fname == "defaults" || fname == "meta") {
 		var m Meta
 		if err = suti.LoadDataFilepath(fpath, &m); err == nil {
 			if fname == "defaults" || fname == "default" {
-				if meta, ok := d[ppath]; ok {
+				if meta, ok := def[ppath]; ok {
 					m.MergeMeta(meta, false)
-					defs[ppath] = m
 				}
+				def[ppath] = m
 			} else if fname == "meta" {
 				p.Meta.MergeMeta(m, true)
 			}
@@ -169,10 +168,10 @@ func loadContentFile(p Page, defs map[string]Meta, fpath string, ppath string) (
 	} else {
 		a := filepath.Join(ppath, filepath.Base(fpath))
 		p.Assets.All = append(p.Assets.All, a)
-		ref := &p.Asset.all[len(p.Assets.All)-1]
+		ref := &p.Assets.All[len(p.Assets.All)-1]
 		mimetype := mime.TypeByExtension(filepath.Ext(fpath))
 		if strings.Contains(mimetype, "image/") {
-			p.Assets.Image = append(p.Assets.Images, ref)
+			p.Assets.Image = append(p.Assets.Image, ref)
 		} else if strings.Contains(mimetype, "video") {
 			p.Assets.Video = append(p.Assets.Video, ref)
 		} else if strings.Contains(mimetype, "audio") {
@@ -181,7 +180,7 @@ func loadContentFile(p Page, defs map[string]Meta, fpath string, ppath string) (
 			p.Assets.Misc = append(p.Assets.Misc, ref)
 		}
 	}
-	return p, d, err
+	return p, def, err
 }
 
 // NewContentFromFile loads the file from `fpath` and converts it to HTML

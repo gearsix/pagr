@@ -2,8 +2,8 @@ package main
 
 import (
 	"os"
-	"testing"
 	"path/filepath"
+	"testing"
 )
 
 func TestLoadTemplateDir(t *testing.T) {
@@ -26,7 +26,7 @@ func TestLoadTemplateDir(t *testing.T) {
 		t.Fatalf("number of returned templates is %d (should be %d)",
 			len(tmpls), len(templates))
 	}
-	
+
 	if err = os.RemoveAll(tdir); err != nil {
 		t.Error(err)
 	}
