@@ -89,7 +89,7 @@ var contents = map[string]string{
 	".cm":   contentsCm,
 }
 
-var asset = []byte{ // 5x5 black png image
+var asset = []byte{ // 5x5 black png image - unecessary but I think this is cool
 	0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00,
 	0x0d, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00,
 	0x00, 0x05, 0x01, 0x03, 0x00, 0x00, 0x00, 0xb7, 0xa1, 0xb4, 0xa6,
@@ -126,7 +126,10 @@ func createTestContents(dir string) (err error) {
 		}
 		writef(filepath.Join(dir, "meta.toml"), "page = \"data\"")
 		writef(filepath.Join(dir, fmt.Sprintf("body%d%s", l, lang)), contents[lang])
-		writef(filepath.Join(dir, "asset.png"), string(asset))
+		writef(filepath.Join(dir, "image.png"), string(asset))
+		writef(filepath.Join(dir, "video.mkv"), "foo")
+		writef(filepath.Join(dir, "audio.mp3"), "foo")
+		writef(filepath.Join(dir, "misc.zip"), "foo")
 
 		if err != nil {
 			break
@@ -227,8 +230,20 @@ func validateTestPages(t *testing.T, pages []Page, e error) {
 		if len(p.Contents) == 0 {
 			t.Error("empty Contents for page:", p.Path)
 		}
-		if len(p.Assets.All) == 0 {
-			t.Error("empty Assets for page:", p.Path)
+		if len(p.Assets.All) != 4 {
+			t.Error("invalid number of Assets.All for page:", p.Path)
+		}
+		if len(p.Assets.Image) != 1 {
+			t.Error("invalid number of Assets.Image for page:", p.Path)
+		}
+		if len(p.Assets.Video) != 1 {
+			t.Error("invalid number of Assets.Video for page:", p.Path)
+		}
+		if len(p.Assets.Audio) != 1 {
+			t.Error("invalid number of Assets.Audio for page:", p.Path)
+		}
+		if len(p.Assets.Misc) != 1 {
+			t.Error("invalid number of Assets.Misc for page:", p.Path)
 		}
 		if pt, e = time.Parse(timefmt, p.Updated); e != nil {
 			t.Fatal(e)
