@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -36,7 +36,7 @@ func TestCopyFile(test *testing.T) {
 	} else if string(buf) != string(srcData) {
 		test.Fatalf("copied srcData (%s) does not match source (%s)", buf, srcData)
 	}
-	
+
 	if err := os.RemoveAll(tdir); err != nil {
 		test.Error(err)
 	}

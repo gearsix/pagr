@@ -2,8 +2,8 @@ package main
 
 import (
 	"os"
-	"testing"
 	"path/filepath"
+	"testing"
 )
 
 func TestBuildCrumbs(test *testing.T) {
@@ -24,7 +24,7 @@ func TestBuildCrumbs(test *testing.T) {
 	}
 
 	validateTestPagesNav(test, p)
-	
+
 	if err = os.RemoveAll(tdir); err != nil {
 		test.Error(err)
 	}
@@ -45,10 +45,10 @@ func TestBuildSitemap(test *testing.T) {
 	var p []Page
 	if p, err = LoadContentDir(tdir); err != nil {
 		test.Errorf("LoadContentDir failed: %s", err)
-	}	
+	}
 
 	validateTestPagesNav(test, p)
-	
+
 	if err = os.RemoveAll(tdir); err != nil {
 		test.Error(err)
 	}

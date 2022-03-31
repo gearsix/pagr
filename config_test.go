@@ -45,7 +45,7 @@ func TestNewConfigFromFile(test *testing.T) {
 	} else {
 		test.Fatal(err)
 	}
-	
+
 	if err := os.RemoveAll(tdir); err != nil {
 		test.Error(err)
 	}

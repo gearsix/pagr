@@ -1,9 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
 	"notabug.org/gearsix/suti"
 	"os"
-	"io/ioutil"
 	"path/filepath"
 	"testing"
 	"time"
@@ -101,7 +101,7 @@ func TestBuild(test *testing.T) {
 	if string(fbuf) != "Test p" {
 		test.Fatalf("invalid result parsed: '%s', expected: 'Test p'", string(fbuf))
 	}
-	
+
 	if err := os.RemoveAll(tdir); err != nil {
 		test.Error(err)
 	}
