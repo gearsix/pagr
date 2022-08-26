@@ -68,8 +68,11 @@ func BuildSitemap(pages []Page) []Page {
 			}
 		}
 
+		sort.SliceStable(p.Nav.All, func(i, j int) bool {
+			return sort.StringsAreSorted([]string{p.Nav.All[j].Updated, p.Nav.All[i].Updated})
+		})
 		sort.SliceStable(p.Nav.Children, func(i, j int) bool {
-			return sort.StringsAreSorted([]string{p.Nav.Children[j].Path, p.Nav.Children[j].Path})
+			return sort.StringsAreSorted([]string{p.Nav.Children[j].Updated, p.Nav.Children[i].Updated})
 		})
 
 		p.Nav.Crumbs = BuildCrumbs(p, pages)
