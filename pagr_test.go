@@ -68,7 +68,7 @@ p3
 `
 
 var contents = map[string]string{
-	"": contentsTxt,
+	"":      contentsTxt,
 	".txt":  contentsTxt,
 	".html": contentsHtml,
 	".md":   contentsMd,

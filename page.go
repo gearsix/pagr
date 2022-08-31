@@ -3,11 +3,12 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
-	"notabug.org/gearsix/suti"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"notabug.org/gearsix/suti"
 )
 
 const timefmt = "2006-01-02"
@@ -27,7 +28,7 @@ func pagePath(root, path string) string {
 	if len(path) == 0 {
 		path = "/"
 	} else {
-		path = filepath.ToSlash(path)
+		path = filepath.ToSlash(strings.TrimSuffix(path, filepath.Ext(path)))
 	}
 	return path
 }

@@ -119,7 +119,7 @@ func findPageTemplate(p Page, t []suti.Template) (tmpl suti.Template) {
 func copyAssets() (count int) {
 	for _, asset := range config.Assets {
 		asset = filepath.Clean(asset)
-		if _, err :=  os.Stat(asset); err != nil {
+		if _, err := os.Stat(asset); err != nil {
 			continue
 		}
 		filepath.Walk(asset,

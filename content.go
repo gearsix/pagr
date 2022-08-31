@@ -4,20 +4,21 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/yuin/goldmark"
-	goldmarkext "github.com/yuin/goldmark/extension"
-	goldmarkparse "github.com/yuin/goldmark/parser"
-	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 	"io"
 	"io/ioutil"
 	"mime"
-	"notabug.org/gearsix/suti"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/yuin/goldmark"
+	goldmarkext "github.com/yuin/goldmark/extension"
+	goldmarkparse "github.com/yuin/goldmark/parser"
+	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
+	"notabug.org/gearsix/suti"
 )
 
 // Content is the converted HTML string of a Content file
@@ -108,11 +109,8 @@ func LoadContentDir(dir string) (p []Page, e error) {
 	dmeta := make(map[string]Meta)
 
 	e = filepath.Walk(dir, func(fpath string, info os.FileInfo, err error) error {
-		if err != nil {
+		if err != nil || ignoreFile(fpath) {
 			return err
-		}
-		if ignoreFile(fpath) {
-			return nil
 		}
 
 		if info.IsDir() {
@@ -168,7 +166,7 @@ func loadContentFile(p Page, def map[string]Meta, fpath string, ppath string) (P
 		p.Assets.All = append(p.Assets.All, a)
 		ref := &p.Assets.All[len(p.Assets.All)-1]
 		mimetype := mime.TypeByExtension(filepath.Ext(fpath))
-		if strings.Contains(mimetype, "image/") {
+		if strings.Contains(mimetype, "image") {
 			p.Assets.Image = append(p.Assets.Image, ref)
 		} else if strings.Contains(mimetype, "video") {
 			p.Assets.Video = append(p.Assets.Video, ref)
