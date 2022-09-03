@@ -33,7 +33,7 @@ func BuildCrumbs(p Page, pages []Page) (crumbs []*Page) {
 		path += "/" + c
 		for j, pp := range pages {
 			if pp.Path == path {
-				crumbs = append(p.Nav.Crumbs, &pages[j])
+				crumbs = append(crumbs, &pages[j])
 				break
 			}
 		}
@@ -69,10 +69,12 @@ func BuildSitemap(pages []Page) []Page {
 		}
 
 		sort.SliceStable(p.Nav.All, func(i, j int) bool {
-			return sort.StringsAreSorted([]string{p.Nav.All[j].Updated, p.Nav.All[i].Updated})
+			return sort.StringsAreSorted(
+				[]string{p.Nav.All[j].Updated, p.Nav.All[i].Updated})
 		})
 		sort.SliceStable(p.Nav.Children, func(i, j int) bool {
-			return sort.StringsAreSorted([]string{p.Nav.Children[j].Updated, p.Nav.Children[i].Updated})
+			return sort.StringsAreSorted(
+				[]string{p.Nav.Children[j].Updated, p.Nav.Children[i].Updated})
 		})
 
 		p.Nav.Crumbs = BuildCrumbs(p, pages)
